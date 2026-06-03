@@ -1,0 +1,22 @@
+// Sentinel — Prisma schema (Phase 0: placeholder model only)
+// Real graph models (Node, Edge, Event) arrive in Phase 2.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Placeholder — keeps the schema non-empty so the first migration runs.
+// Replace with real models in Phase 2.
+// ---------------------------------------------------------------------------
+model SentinelMeta {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+}
