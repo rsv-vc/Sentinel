@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* -----------------------------------------------------------------------
+   Sentinel design system — dark SaaS aesthetic
+   ----------------------------------------------------------------------- */
+
+@theme {
+  /* Background palette */
+  --color-bg-base:      #09090f;
+  --color-bg-card:      #111118;
+  --color-bg-secondary: #18181f;
+  --color-bg-elevated:  #1e1e28;
+
+  /* Accent — indigo */
+  --color-indigo-500: #6366f1;
+  --color-indigo-400: #818cf8;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-600: #4f46e5;
+
+  /* Text */
+  --color-text-primary:   #e4e4f0;
+  --color-text-secondary: #8b8ba8;
+  --color-text-muted:     #5b5b70;
+
+  /* Status */
+  --color-green-400:  #4ade80;
+  --color-green-500:  #22c55e;
+  --color-amber-400:  #fbbf24;
+  --color-amber-500:  #f59e0b;
+  --color-red-400:    #f87171;
+  --color-red-500:    #ef4444;
+
+  /* Border */
+  --color-border:         #2a2a38;
+  --color-border-accent:  #6366f144;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg-base); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }

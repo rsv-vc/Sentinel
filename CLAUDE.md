@@ -79,8 +79,8 @@ enumerated list of known blind spots. Never claims completeness.
 
 ## Current state / next slice
 
-- **Phase completed:** Phase 2 — Graph schema + normalization service + API routes
-- **Next unbuilt slice:** Phase 3 — Inventory UI (Next.js screens) + coverage score
+- **Phase completed:** Phase 3 — Inventory UI, coverage score, confirm/annotate flows
+- **Next unbuilt slice:** Phase 4 — Continuous sync (background scheduler, mock evolution, change feed)
 - **Known issues / TODOs:**
   - Migration must be run manually (`npm run db:migrate`) after `docker:up` — no auto-migrate on startup yet.
   - No auth yet (Phase 8).
