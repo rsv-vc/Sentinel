@@ -1,5 +1,4 @@
-// Sentinel — Prisma schema (Phase 0: placeholder model only)
-// Real graph models (Node, Edge, Event) arrive in Phase 2.
+// Sentinel — Prisma schema (Phase 2: graph model)
 
 generator client {
   provider = "prisma-client-js"
@@ -11,12 +10,108 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder — keeps the schema non-empty so the first migration runs.
-// Replace with real models in Phase 2.
+// Enums
 // ---------------------------------------------------------------------------
-model SentinelMeta {
-  id        Int      @id @default(autoincrement())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
+
+enum NodeType {
+  USE_CASE
+  ASSET
+  VENDOR
+  DATA_ASSET
+  JURISDICTION
+}
+
+enum EdgeType {
+  USES_ASSET        // UseCase -> Asset
+  USES_MODEL        // UseCase -> Asset (model deployment)
+  OWNED_BY_VENDOR   // Asset  -> Vendor
+  STORES_DATA       // Asset  -> DataAsset
+  SUBJECT_TO        // UseCase | Asset -> Jurisdiction
+  HAS_GRANT         // Asset  -> IdentityGrant (stored as DataAsset node)
+  EGRESSES_TO       // Asset  -> Jurisdiction | Asset
+}
+
+enum EventType {
+  NODE_CREATED
+  NODE_UPDATED
+  NODE_FLAGGED_LOW_CONFIDENCE
+  NODE_CONFIRMED
+  EDGE_CREATED
+  EDGE_REMOVED
+  SYNC_COMPLETED
+}
+
+enum ConfidenceLevel {
+  HIGH    // observed via live telemetry, unambiguous correlation
+  MEDIUM  // telemetry observed but correlation is inferred
+  LOW     // manually entered OR correlation is ambiguous — requires confirmation
+}
+
+enum DataSource {
+  TELEMETRY
+  MANUAL
+}
+
+// ---------------------------------------------------------------------------
+// GraphNode
+// ---------------------------------------------------------------------------
+
+model GraphNode {
+  id         String          @id               // deterministic, content-addressed
+  type       NodeType
+  label      String                            // human-readable name
+  attributes Json            @default("{}")    // type-specific fields
+  confidence ConfidenceLevel @default(HIGH)
+  source     DataSource      @default(TELEMETRY)
+  confirmed  Boolean         @default(false)   // manual confirmation for LOW confidence nodes
+  connectorId String?                          // which connector last observed this
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  edgesFrom  GraphEdge[]     @relation("EdgeFrom")
+  edgesTo    GraphEdge[]     @relation("EdgeTo")
+  events     Event[]
+
+  @@index([type])
+  @@index([connectorId])
+}
+
+// ---------------------------------------------------------------------------
+// GraphEdge
+// ---------------------------------------------------------------------------
+
+model GraphEdge {
+  id         String    @id @default(cuid())
+  type       EdgeType
+  fromId     String
+  toId       String
+  attributes Json      @default("{}")
+  createdAt  DateTime  @default(now())
+
+  from       GraphNode @relation("EdgeFrom", fields: [fromId], references: [id])
+  to         GraphNode @relation("EdgeTo",   fields: [toId],   references: [id])
+
+  @@unique([fromId, toId, type])   // prevent duplicate edges of the same type
+  @@index([fromId])
+  @@index([toId])
+}
+
+// ---------------------------------------------------------------------------
+// Event  — append-only evidence trail (no updates, no deletes)
+// ---------------------------------------------------------------------------
+
+model Event {
+  id          String    @id @default(cuid())
+  type        EventType
+  nodeId      String?
+  payload     Json      @default("{}")   // before/after snapshot or signal data
+  actor       String    @default("system") // "system", connector id, or user id
+  connectorId String?
+  createdAt   DateTime  @default(now())
+
+  node        GraphNode? @relation(fields: [nodeId], references: [id])
+
+  @@index([nodeId])
+  @@index([createdAt])
+  @@index([connectorId])
 }

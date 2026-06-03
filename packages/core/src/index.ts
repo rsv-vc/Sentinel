@@ -1,3 +1,3 @@
-// Normalization, risk engine, exports — Phase 2+.
-// Stub only in Phase 0.
-export {};
+export { NormalizationService } from "./normalization.service";
+export type { NormalizationResult } from "./normalization.service";
+export { deterministicId, nodeId } from "./deterministic-id";

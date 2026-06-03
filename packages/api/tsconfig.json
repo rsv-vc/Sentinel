@@ -1,7 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@sentinel/connectors": ["../connectors/src/index.ts"],
+      "@sentinel/core": ["../core/src/index.ts"],
+      "@sentinel/db": ["../db/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

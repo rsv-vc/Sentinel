@@ -79,12 +79,48 @@ enumerated list of known blind spots. Never claims completeness.
 
 ## Current state / next slice
 
-- **Phase completed:** Phase 1 — Connector interface + MockCloudConnector + Registry
-- **Next unbuilt slice:** Phase 2 — Graph schema (Node/Edge/Event tables) + normalization service
+- **Phase completed:** Phase 2 — Graph schema + normalization service + API routes
+- **Next unbuilt slice:** Phase 3 — Inventory UI (Next.js screens) + coverage score
 - **Known issues / TODOs:**
-  - `packages/db` seed uses `SentinelMeta` placeholder; replace with real graph models in Phase 2.
+  - Migration must be run manually (`npm run db:migrate`) after `docker:up` — no auto-migrate on startup yet.
   - No auth yet (Phase 8).
-  - `packages/web` has no Tailwind — will add when UI phases begin (Phase 3).
+  - `packages/web` has no Tailwind — will add in Phase 3.
+
+## Graph model (as-built, Phase 2)
+
+**Prisma schema:** `packages/db/prisma/schema.prisma`
+
+Node types: `USE_CASE`, `ASSET` (includes model deployments), `VENDOR`, `DATA_ASSET`, `JURISDICTION`
+Edge types: `USES_ASSET`, `USES_MODEL`, `OWNED_BY_VENDOR`, `STORES_DATA`, `SUBJECT_TO`, `HAS_GRANT`, `EGRESSES_TO`
+Confidence levels: `HIGH` (telemetry, unambiguous), `MEDIUM` (inferred), `LOW` (manual / ambiguous — requires confirmation)
+
+**Event table** is append-only. Types: `NODE_CREATED`, `NODE_UPDATED`, `NODE_FLAGGED_LOW_CONFIDENCE`, `NODE_CONFIRMED`, `EDGE_CREATED`, `EDGE_REMOVED`, `SYNC_COMPLETED`. No deletes or updates ever.
+
+**`IGraphRepository`** (`packages/db/src/graph.repository.interface.ts`) — swap Postgres → Neo4j here without touching core/api.
+**`PrismaGraphRepository`** — concrete implementation.
+
+## Normalization service (as-built, Phase 2)
+
+**`NormalizationService`** (`packages/core/src/normalization.service.ts`):
+- Reads all four connector data types in parallel
+- Derives deterministic node IDs via FNV-1a hash (`deterministic-id.ts`)
+- Correlation: models → UseCases via `useCaseLabels`; assets → UseCases via `tags.project`
+- Confidence: HIGH (tagged), MEDIUM (some context / inferred), LOW (untagged — shadow AI candidate)
+- Low-confidence nodes get a `NODE_FLAGGED_LOW_CONFIDENCE` event for human confirmation
+- Writes `SYNC_COMPLETED` event as an evidence-trail boundary marker
+
+## API routes (as-built, Phase 2)
+
+Base path: `/api`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/use-cases` | List all UseCase nodes |
+| GET | `/use-cases/:id/graph` | UseCase subgraph (root + neighbours + edges) |
+| GET | `/nodes/:id/history` | Append-only event history for any node |
+| GET | `/graph/recent-events?limit=N` | Most recent N events across all nodes |
+| GET | `/connectors` | Registry status for all connectors |
+| POST | `/sync` | Trigger on-demand normalization (dev helper) |
 
 ## Connector interface (as-built, Phase 1)
 
