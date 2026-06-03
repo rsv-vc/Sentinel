@@ -18,3 +18,4 @@ export type {
 
 export { ConnectorRegistry } from "./ConnectorRegistry";
 export { MockCloudConnector } from "./mock/MockCloudConnector";
+export { EvolvingMockConnector } from "./mock/EvolvingMockConnector";

@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { triggerSync } from "@/lib/api";
 
 export function SyncButton() {
   const [state, setState] = useState<"idle" | "syncing" | "done" | "error">("idle");
+  const router = useRouter();
 
   async function handleSync() {
     setState("syncing");
     try {
       await triggerSync();
       setState("done");
-      setTimeout(() => setState("idle"), 3000);
+      setTimeout(() => { setState("idle"); router.refresh(); }, 1500);
     } catch {
       setState("error");
       setTimeout(() => setState("idle"), 4000);

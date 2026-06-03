@@ -79,8 +79,8 @@ enumerated list of known blind spots. Never claims completeness.
 
 ## Current state / next slice
 
-- **Phase completed:** Phase 3 — Inventory UI, coverage score, confirm/annotate flows
-- **Next unbuilt slice:** Phase 4 — Continuous sync (background scheduler, mock evolution, change feed)
+- **Phase completed:** Phase 4 — Continuous sync, evolving mock connector, changes feed
+- **Next unbuilt slice:** Phase 5 — Risk & compliance engine
 - **Known issues / TODOs:**
   - Migration must be run manually (`npm run db:migrate`) after `docker:up` — no auto-migrate on startup yet.
   - No auth yet (Phase 8).

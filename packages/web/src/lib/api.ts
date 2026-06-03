@@ -103,6 +103,31 @@ export const getRecentEvents = (limit = 20) =>
 export const triggerSync = () =>
   apiFetch<{ ok: boolean; result: unknown }>("/api/sync", { method: "POST" });
 
+export interface SyncStatusDTO {
+  running: boolean;
+  intervalMs: number;
+  totalRuns: number;
+  lastRun: {
+    runNumber: number;
+    startedAt: string;
+    completedAt: string | null;
+    status: "running" | "completed" | "skipped" | "error";
+    result: { nodesUpserted: number; edgesUpserted: number; lowConfidenceNodes: string[] } | null;
+    error: string | null;
+  } | null;
+  nextRunAt: string | null;
+  connectors: Array<{
+    id: string;
+    name: string;
+    status: string;
+    lastSyncAt: string | null;
+    currentRun: number;
+  }>;
+}
+
+export const getSyncStatus = () =>
+  apiFetch<SyncStatusDTO>("/api/sync/status", { cache: "no-store" });
+
 export const confirmNode = (id: string, actor = "user") =>
   apiFetch<{ ok: boolean; node: GraphNodeDTO }>(
     `/api/nodes/${encodeURIComponent(id)}/confirm`,
