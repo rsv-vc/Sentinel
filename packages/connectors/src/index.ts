@@ -1,3 +1,20 @@
-// Connector interface and implementations — Phase 1.
-// Stub only in Phase 0.
-export {};
+// Public surface of @sentinel/connectors
+
+export type {
+  Asset,
+  AssetKind,
+  ConnectorRecord,
+  ConnectorStatus,
+  EgressEvent,
+  EgressDirection,
+  GrantLevel,
+  IConnector,
+  IdentityGrant,
+  ModelDeployment,
+  ModelProvider,
+  MonthlyCost,
+  Region,
+} from "./types";
+
+export { ConnectorRegistry } from "./ConnectorRegistry";
+export { MockCloudConnector } from "./mock/MockCloudConnector";
