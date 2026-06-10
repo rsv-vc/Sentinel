@@ -39,6 +39,30 @@ enum EventType {
   EDGE_CREATED
   EDGE_REMOVED
   SYNC_COMPLETED
+  RECTIFICATION_OPENED
+  RECTIFICATION_UPDATED
+  RECTIFICATION_RESOLVED
+  EVIDENCE_FILED
+}
+
+enum Role {
+  ADMIN    // full access
+  ANALYST  // read + rectify + confirm nodes + trigger sync
+  VIEWER   // read-only
+}
+
+enum RectificationStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  WONT_FIX
+}
+
+enum RectificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 enum ConfidenceLevel {
@@ -114,4 +138,66 @@ model Event {
   @@index([nodeId])
   @@index([createdAt])
   @@index([connectorId])
+}
+
+// ---------------------------------------------------------------------------
+// User  — local accounts for the prototype (Phase 8)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("")
+  role         Role     @default(VIEWER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// Rectification  — remediation actions against risk signals / compliance gaps
+// Principle 1: "rectify, not transfer" — no insurance or risk-transfer fields.
+// ---------------------------------------------------------------------------
+
+model Rectification {
+  id           String                @id @default(cuid())
+  title        String
+  description  String                @default("")
+  // Optional link to a GraphNode (use-case, asset, etc.)
+  nodeId       String?
+  // Optional reference to a compliance obligation id e.g. "gdpr-art35"
+  obligationId String?
+  // Optional reference to a risk dimension e.g. "modelBehaviour"
+  dimensionId  String?
+  status       RectificationStatus   @default(OPEN)
+  priority     RectificationPriority @default(MEDIUM)
+  actor        String                @default("user")
+  dueDate      DateTime?
+  resolvedAt   DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  evidence     RectificationEvidence[]
+
+  @@index([nodeId])
+  @@index([status])
+  @@index([obligationId])
+}
+
+// ---------------------------------------------------------------------------
+// RectificationEvidence  — append-only evidence trail per rectification
+// ---------------------------------------------------------------------------
+
+model RectificationEvidence {
+  id              String        @id @default(cuid())
+  rectificationId String
+  content         String        // free-text evidence description
+  actor           String        @default("user")
+  createdAt       DateTime      @default(now())
+
+  rectification   Rectification @relation(fields: [rectificationId], references: [id])
+
+  @@index([rectificationId])
 }

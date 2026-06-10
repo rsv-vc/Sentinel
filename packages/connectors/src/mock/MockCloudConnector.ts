@@ -2,15 +2,13 @@
  * MockCloudConnector — deterministic, realistic fake cloud estate.
  *
  * Returns the same data on every call (seeded constants, not Math.random()).
- * Designed to be a stand-in for a real AWS/Azure/GCP connector during local
- * development and demos. Real connectors will implement IConnector and pass
- * the same read-only tests.
+ * Designed to be a stand-in for a real connector during local development and demos.
  *
  * Estate modelled:
- *   Assets         — 2 GPU instances, 1 compute instance, 2 storage buckets
- *   Models         — 2 deployments (GPT-4o via OpenAI, Claude 3.5 Sonnet via Anthropic)
- *   Identity grants — 6 grants across humans and service accounts
- *   Egress events  — 8 recent events covering internal, external, and cross-border flows
+ *   Assets         — 20 GPU hardware instances across 10 providers (scraped from computestacker.com, June 2026)
+ *   Models         — 24 business-productivity AI tool deployments
+ *   Identity grants — none
+ *   Egress events  — none
  */
 
 import type {
@@ -25,233 +23,564 @@ import type {
 // Static seed data
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// GPU Hardware Assets — sourced from computestacker.com/providers (June 2026)
+// Monthly cost = hourly rate × 730 hrs. capacityGb = GPU VRAM.
+// ---------------------------------------------------------------------------
+
 const ASSETS: Asset[] = [
+
+  // ── CoreWeave ──────────────────────────────────────────────────────────────
   {
-    id: "aws::ec2::i-0a1b2c3d4e5f60001",
+    id: "coreweave::gpu::h100-sxm5-1x-us-east",
     kind: "GPU_INSTANCE",
-    name: "ml-training-gpu-01",
-    vendor: "aws",
+    name: "CoreWeave — H100 SXM5 (1×)",
+    vendor: "CoreWeave",
     region: "us-east-1",
-    vcpus: 96,
-    capacityGb: 320, // A100 80 GB × 4
-    monthlyCost: { amount: 18_432, currency: "USD" },
-    tags: { env: "production", team: "ml-platform", project: "fraud-detection" },
+    vcpus: 26,
+    capacityGb: 80,           // VRAM GB
+    monthlyCost: { amount: 4_497, currency: "USD" },   // $6.16/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "6.16" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
   {
-    id: "aws::ec2::i-0a1b2c3d4e5f60002",
+    id: "coreweave::gpu::a100-80gb-pcie-1x-us-east",
     kind: "GPU_INSTANCE",
-    name: "ml-inference-gpu-01",
-    vendor: "aws",
-    region: "eu-west-1",
-    vcpus: 48,
-    capacityGb: 80, // A10G 24 GB × ~3
-    monthlyCost: { amount: 6_144, currency: "USD" },
-    tags: { env: "production", team: "ml-platform", project: "customer-churn" },
+    name: "CoreWeave — A100 80GB PCIe (1×)",
+    vendor: "CoreWeave",
+    region: "us-east-1",
+    vcpus: 12,
+    capacityGb: 80,
+    monthlyCost: { amount: 1_613, currency: "USD" },   // $2.21/hr
+    tags: { env: "production", team: "ml-platform", workload: "Inference", category: "gpu-compute", pricePerHour: "2.21" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Lambda Labs ────────────────────────────────────────────────────────────
+  {
+    id: "lambda::gpu::h100-sxm5-1x-us-west",
+    kind: "GPU_INSTANCE",
+    name: "Lambda Labs — H100 SXM5 (1×)",
+    vendor: "Lambda Labs",
+    region: "us-west-2",
+    vcpus: 26,
+    capacityGb: 80,
+    monthlyCost: { amount: 2_402, currency: "USD" },   // $3.29/hr
+    tags: { env: "production", team: "research", workload: "AI Training", category: "gpu-compute", pricePerHour: "3.29" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
   {
-    id: "aws::ec2::i-0a1b2c3d4e5f60003",
-    kind: "COMPUTE_INSTANCE",
-    name: "api-worker-01",
-    vendor: "aws",
+    id: "lambda::gpu::a100-40gb-sxm4-1x-us-west",
+    kind: "GPU_INSTANCE",
+    name: "Lambda Labs — A100 40GB SXM4 (1×)",
+    vendor: "Lambda Labs",
+    region: "us-west-2",
+    vcpus: 14,
+    capacityGb: 40,
+    monthlyCost: { amount: 803, currency: "USD" },     // $1.10/hr
+    tags: { env: "production", team: "research", workload: "Fine-tuning", category: "gpu-compute", pricePerHour: "1.10" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── RunPod ─────────────────────────────────────────────────────────────────
+  {
+    id: "runpod::gpu::h100-sxm-secure-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "RunPod — H100 SXM Secure Cloud (1×)",
+    vendor: "RunPod",
     region: "us-east-1",
+    vcpus: 24,
+    capacityGb: 80,
+    monthlyCost: { amount: 1_964, currency: "USD" },   // $2.69/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "2.69" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "runpod::gpu::rtx-4090-community-1x-eu",
+    kind: "GPU_INSTANCE",
+    name: "RunPod — RTX 4090 Community (1×)",
+    vendor: "RunPod",
+    region: "eu-central-1",
+    vcpus: 6,
+    capacityGb: 24,
+    monthlyCost: { amount: 321, currency: "USD" },     // $0.44/hr
+    tags: { env: "development", team: "ml-platform", workload: "Inference", category: "gpu-compute", pricePerHour: "0.44" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Crusoe Cloud ───────────────────────────────────────────────────────────
+  {
+    id: "crusoe::gpu::h100-sxm5-1x-us-west",
+    kind: "GPU_INSTANCE",
+    name: "Crusoe Cloud — H100 SXM5 (1×)",
+    vendor: "Crusoe Cloud",
+    region: "us-west-1",
+    vcpus: 24,
+    capacityGb: 80,
+    monthlyCost: { amount: 1_745, currency: "USD" },   // $2.39/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "2.39" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "crusoe::gpu::l40s-1x-us-west",
+    kind: "GPU_INSTANCE",
+    name: "Crusoe Cloud — L40S (1×)",
+    vendor: "Crusoe Cloud",
+    region: "us-west-1",
     vcpus: 16,
-    monthlyCost: { amount: 512, currency: "USD" },
-    tags: { env: "production", team: "platform", project: "api-gateway" },
+    capacityGb: 48,
+    monthlyCost: { amount: 942, currency: "USD" },     // $1.29/hr
+    tags: { env: "production", team: "ml-platform", workload: "Inference", category: "gpu-compute", pricePerHour: "1.29" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Google Cloud (GCP) ─────────────────────────────────────────────────────
+  {
+    id: "gcp::gpu::a3-high-h100-1x-us-central",
+    kind: "GPU_INSTANCE",
+    name: "GCP — H100 80GB A3 High (1×)",
+    vendor: "Google Cloud",
+    region: "us-central1",
+    vcpus: 26,
+    capacityGb: 80,
+    monthlyCost: { amount: 2_548, currency: "USD" },   // $3.49/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "3.49" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
   {
-    id: "aws::s3::arn:aws:s3:::sentinel-training-data",
-    kind: "OBJECT_STORAGE",
-    name: "sentinel-training-data",
-    vendor: "aws",
+    id: "gcp::gpu::g2-standard-l4-1x-eu-west",
+    kind: "GPU_INSTANCE",
+    name: "GCP — L4 G2 Standard (1×)",
+    vendor: "Google Cloud",
+    region: "eu-west4",
+    vcpus: 8,
+    capacityGb: 24,
+    monthlyCost: { amount: 511, currency: "USD" },     // $0.70/hr
+    tags: { env: "production", team: "ml-platform", workload: "Inference", category: "gpu-compute", pricePerHour: "0.70" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Vast.ai ────────────────────────────────────────────────────────────────
+  {
+    id: "vastai::gpu::h100-pcie-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "Vast.ai — H100 PCIe (1×)",
+    vendor: "Vast.ai",
     region: "us-east-1",
-    capacityGb: 48_000,
-    monthlyCost: { amount: 1_104, currency: "USD" },
-    tags: { env: "production", classification: "confidential", team: "ml-platform" },
+    vcpus: 20,
+    capacityGb: 80,
+    monthlyCost: { amount: 1_117, currency: "USD" },   // $1.53/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "1.53" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
   {
-    id: "aws::s3::arn:aws:s3:::sentinel-model-artefacts",
-    kind: "OBJECT_STORAGE",
-    name: "sentinel-model-artefacts",
-    vendor: "aws",
+    id: "vastai::gpu::rtx-4090-1x-eu-west",
+    kind: "GPU_INSTANCE",
+    name: "Vast.ai — RTX 4090 (1×)",
+    vendor: "Vast.ai",
     region: "eu-west-1",
-    capacityGb: 8_200,
-    monthlyCost: { amount: 189, currency: "USD" },
-    tags: { env: "production", classification: "internal", team: "ml-platform" },
+    vcpus: 8,
+    capacityGb: 24,
+    monthlyCost: { amount: 255, currency: "USD" },     // $0.35/hr
+    tags: { env: "development", team: "research", workload: "Fine-tuning", category: "gpu-compute", pricePerHour: "0.35" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Civo ───────────────────────────────────────────────────────────────────
+  {
+    id: "civo::gpu::a100-80gb-1x-lon",
+    kind: "GPU_INSTANCE",
+    name: "Civo — A100 80GB (1×)",
+    vendor: "Civo",
+    region: "lon1",
+    vcpus: 8,
+    capacityGb: 80,
+    monthlyCost: { amount: 876, currency: "USD" },     // $1.20/hr
+    tags: { env: "production", team: "ml-platform", workload: "Inference", category: "gpu-compute", pricePerHour: "1.20" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── AWS ────────────────────────────────────────────────────────────────────
+  {
+    id: "aws::gpu::p5-h100-sxm5-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "AWS — H100 SXM5 p5 (1×)",
+    vendor: "AWS",
+    region: "us-east-1",
+    vcpus: 8,
+    capacityGb: 80,
+    monthlyCost: { amount: 5_095, currency: "USD" },   // $6.98/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "6.98" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Azure ──────────────────────────────────────────────────────────────────
+  {
+    id: "azure::gpu::nd-h100-v5-1x-eastus",
+    kind: "GPU_INSTANCE",
+    name: "Azure — H100 SXM ND H100 v5 (1×)",
+    vendor: "Azure",
+    region: "eastus",
+    vcpus: 12,
+    capacityGb: 80,
+    monthlyCost: { amount: 1_124, currency: "USD" },   // $1.54/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "1.54" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Thunder Compute ────────────────────────────────────────────────────────
+  {
+    id: "thunder::gpu::rtx-4090-1x-us-west",
+    kind: "GPU_INSTANCE",
+    name: "Thunder Compute — RTX 4090 (1×)",
+    vendor: "Thunder Compute",
+    region: "us-west-2",
+    vcpus: 8,
+    capacityGb: 24,
+    monthlyCost: { amount: 328, currency: "USD" },     // $0.45/hr
+    tags: { env: "development", team: "research", workload: "Fine-tuning", category: "gpu-compute", pricePerHour: "0.45" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Paperspace ─────────────────────────────────────────────────────────────
+  {
+    id: "paperspace::gpu::a100-80gb-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "Paperspace — A100 80GB (1×)",
+    vendor: "Paperspace",
+    region: "us-east-1",
+    vcpus: 12,
+    capacityGb: 80,
+    monthlyCost: { amount: 2_256, currency: "USD" },   // $3.09/hr
+    tags: { env: "production", team: "research", workload: "AI Training", category: "gpu-compute", pricePerHour: "3.09" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+
+  // ── Spheron ────────────────────────────────────────────────────────────────
+  {
+    id: "spheron::gpu::b200-sxm6-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "Spheron — B200 SXM6 (1×)",
+    vendor: "Spheron",
+    region: "us-east-1",
+    vcpus: 30,
+    capacityGb: 192,
+    monthlyCost: { amount: 4_395, currency: "USD" },   // $6.02/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "6.02" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "spheron::gpu::h200-sxm-1x-us-east",
+    kind: "GPU_INSTANCE",
+    name: "Spheron — H200 SXM (1×)",
+    vendor: "Spheron",
+    region: "us-east-1",
+    vcpus: 44,
+    capacityGb: 141,
+    monthlyCost: { amount: 3_314, currency: "USD" },   // $4.54/hr
+    tags: { env: "production", team: "ml-platform", workload: "AI Training", category: "gpu-compute", pricePerHour: "4.54" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
 ];
 
 const MODEL_DEPLOYMENTS: ModelDeployment[] = [
+  // ---------------------------------------------------------------------------
+  // Business Productivity assets — scraped from aadhunikai.com/tools?category=business-productivity
+  // ---------------------------------------------------------------------------
+
   {
-    id: "openai::deployment::fraud-gpt4o-prod",
-    name: "Fraud Detection — GPT-4o",
-    provider: "openai",
-    modelId: "gpt-4o",
+    id: "notion::productivity::notion-ai-prod",
+    name: "Notion AI — Workspace Assistant",
+    provider: "Notion",
+    modelId: "notion-ai-v2",
     region: "us-east-1",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    monthlyCost: { amount: 22_400, currency: "USD" },
-    useCaseLabels: ["fraud-detection", "transaction-scoring"],
-    tags: { env: "production", team: "risk-ai", owner: "alice@acme.com" },
+    endpoint: "https://notion.so",
+    monthlyCost: { amount: 8_400, currency: "USD" },
+    useCaseLabels: ["Knowledge Management", "Document Creation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "freemium", planName: "Plus", pricePerSeat: "16", billingCycle: "monthly", seats: 525, owner: "alice@acme.com" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
   {
-    id: "anthropic::deployment::churn-claude35-prod",
-    name: "Customer Churn — Claude 3.5 Sonnet",
-    provider: "anthropic",
-    modelId: "claude-3-5-sonnet-20241022",
+    id: "microsoft::productivity::copilot-prod",
+    name: "Microsoft Copilot — M365 AI Assistant",
+    provider: "Microsoft",
+    modelId: "copilot-gpt4-turbo",
     region: "eu-west-1",
-    endpoint: "https://api.anthropic.com/v1/messages",
-    monthlyCost: { amount: 9_800, currency: "USD" },
-    useCaseLabels: ["customer-churn", "retention-scoring"],
-    tags: { env: "production", team: "cx-ai", owner: "bob@acme.com" },
+    endpoint: "https://copilot.microsoft.com",
+    monthlyCost: { amount: 14_200, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Document Creation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "paid", planName: "Microsoft 365 Copilot", pricePerSeat: "30", billingCycle: "monthly", seats: 473, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "zapier::productivity::zapier-ai-prod",
+    name: "Zapier AI — Workflow Automation",
+    provider: "Zapier",
+    modelId: "zapier-ai-v3",
+    region: "us-east-1",
+    endpoint: "https://zapier.com",
+    monthlyCost: { amount: 6_700, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Process Automation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "freemium", planName: "Teams", pricePerSeat: "74", billingCycle: "monthly", seats: 91, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "make::productivity::make-prod",
+    name: "Make — Visual Automation Platform",
+    provider: "Make",
+    modelId: "make-ai-v2",
+    region: "eu-central-1",
+    endpoint: "https://make.com",
+    monthlyCost: { amount: 4_300, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Process Automation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "freemium", planName: "Core", pricePerSeat: "29", billingCycle: "monthly", seats: 148, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "clickup::productivity::clickup-brain-prod",
+    name: "ClickUp Brain — AI Project Management",
+    provider: "ClickUp",
+    modelId: "clickup-brain-v1",
+    region: "us-east-1",
+    endpoint: "https://clickup.com",
+    monthlyCost: { amount: 5_600, currency: "USD" },
+    useCaseLabels: ["Project Management", "Workflow Automation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "paid", planName: "Business", pricePerSeat: "14", billingCycle: "monthly", seats: 400, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "airtable::productivity::airtable-ai-prod",
+    name: "Airtable AI — Smart Database Workflows",
+    provider: "Airtable",
+    modelId: "airtable-ai-v1",
+    region: "us-east-1",
+    endpoint: "https://airtable.com",
+    monthlyCost: { amount: 7_100, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Data Management"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "paid", planName: "Business", pricePerSeat: "24", billingCycle: "monthly", seats: 296, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "miro::productivity::miro-ai-prod",
+    name: "Miro AI — Collaborative Whiteboard",
+    provider: "Miro",
+    modelId: "miro-ai-v2",
+    region: "eu-west-1",
+    endpoint: "https://miro.com",
+    monthlyCost: { amount: 4_900, currency: "USD" },
+    useCaseLabels: ["Project Management", "Document Creation"],
+    tags: { env: "production", team: "product", category: "business-productivity", pricing: "paid", planName: "Business", pricePerSeat: "20", billingCycle: "monthly", seats: 245, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "gamma::productivity::gamma-prod",
+    name: "Gamma.app — AI Presentation Creator",
+    provider: "Gamma",
+    modelId: "gamma-v3",
+    region: "us-west-2",
+    endpoint: "https://gamma.app",
+    monthlyCost: { amount: 2_800, currency: "USD" },
+    useCaseLabels: ["Document Creation", "Sales Enablement"],
+    tags: { env: "production", team: "sales", category: "business-productivity", pricing: "freemium", planName: "Plus", pricePerSeat: "15", billingCycle: "monthly", seats: 187, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "motion::productivity::motion-prod",
+    name: "Motion — AI Task Scheduler",
+    provider: "Motion",
+    modelId: "motion-scheduler-v2",
+    region: "us-east-1",
+    endpoint: "https://usemotion.com",
+    monthlyCost: { amount: 3_200, currency: "USD" },
+    useCaseLabels: ["Project Management", "Workflow Automation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "paid", planName: "Individual", pricePerSeat: "34", billingCycle: "monthly", seats: 94, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "guru::productivity::guru-ai-prod",
+    name: "Guru AI — Knowledge Management",
+    provider: "Guru",
+    modelId: "guru-ai-v2",
+    region: "us-east-1",
+    endpoint: "https://getguru.com",
+    monthlyCost: { amount: 5_100, currency: "USD" },
+    useCaseLabels: ["Knowledge Management", "Customer Support"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "paid", planName: "Builder", pricePerSeat: "18", billingCycle: "monthly", seats: 283, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "taskade::productivity::taskade-ai-prod",
+    name: "Taskade AI — Productivity & Collaboration",
+    provider: "Taskade",
+    modelId: "taskade-ai-v2",
+    region: "us-east-1",
+    endpoint: "https://taskade.com",
+    monthlyCost: { amount: 2_600, currency: "USD" },
+    useCaseLabels: ["Project Management", "Knowledge Management"],
+    tags: { env: "production", team: "product", category: "business-productivity", pricing: "freemium", planName: "Pro", pricePerSeat: "8", billingCycle: "monthly", seats: 325, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "bardeen::productivity::bardeen-prod",
+    name: "Bardeen — AI Browser Automation",
+    provider: "Bardeen",
+    modelId: "bardeen-v2",
+    region: "us-west-2",
+    endpoint: "https://bardeen.ai",
+    monthlyCost: { amount: 1_900, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Process Automation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "freemium", planName: "Power", pricePerSeat: "40", billingCycle: "monthly", seats: 48, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "mem::productivity::mem-ai-prod",
+    name: "Mem AI — Smart Note-Taking",
+    provider: "Mem AI",
+    modelId: "mem-ai-v3",
+    region: "us-east-1",
+    endpoint: "https://mem.ai",
+    monthlyCost: { amount: 2_100, currency: "USD" },
+    useCaseLabels: ["Knowledge Management", "Document Creation"],
+    tags: { env: "production", team: "product", category: "business-productivity", pricing: "paid", planName: "Teams", pricePerSeat: "14", billingCycle: "monthly", seats: 150, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "genspark::productivity::genspark-prod",
+    name: "Genspark — Autonomous AI Superagent",
+    provider: "Genspark",
+    modelId: "genspark-agent-v1",
+    region: "us-east-1",
+    endpoint: "https://genspark.ai",
+    monthlyCost: { amount: 3_700, currency: "USD" },
+    useCaseLabels: ["Workflow Automation", "Research Automation"],
+    tags: { env: "production", team: "product", category: "business-productivity", pricing: "subscription", planName: "Pro", pricePerSeat: "30", billingCycle: "monthly", seats: 123, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "resolveai::productivity::resolveai-prod",
+    name: "ResolveAI — Custom Support Agents",
+    provider: "Resolve AI",
+    modelId: "resolveai-v2",
+    region: "eu-west-1",
+    endpoint: "https://resolveai.co",
+    monthlyCost: { amount: 2_400, currency: "USD" },
+    useCaseLabels: ["Customer Support", "Workflow Automation"],
+    tags: { env: "production", team: "cx-ai", category: "business-productivity", pricing: "freemium", planName: "Growth", pricePerSeat: "99", billingCycle: "monthly", seats: 24, owner: "carol@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "parley::productivity::parley-ai-prod",
+    name: "Parley AI — Legal Meeting Intelligence",
+    provider: "Parley AI",
+    modelId: "parley-legal-v1",
+    region: "us-east-1",
+    endpoint: "https://parleyai.com",
+    monthlyCost: { amount: 4_500, currency: "USD" },
+    useCaseLabels: ["Meeting Intelligence", "Document Creation"],
+    tags: { env: "production", team: "legal", category: "business-productivity", pricing: "subscription", planName: "Enterprise", pricePerSeat: "99", billingCycle: "monthly", seats: 45, owner: "dave@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "copper::productivity::copper-crm-prod",
+    name: "Copper CRM — Google Workspace CRM",
+    provider: "Copper",
+    modelId: "copper-ai-v2",
+    region: "us-east-1",
+    endpoint: "https://copper.com",
+    monthlyCost: { amount: 6_200, currency: "USD" },
+    useCaseLabels: ["Sales Automation", "Customer Support"],
+    tags: { env: "production", team: "sales", category: "business-productivity", pricing: "subscription", planName: "Business", pricePerSeat: "29", billingCycle: "monthly", seats: 214, owner: "dave@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "smartclerk::productivity::smartclerk-prod",
+    name: "SmartClerk — Invoice Automation",
+    provider: "SmartClerk",
+    modelId: "smartclerk-v1",
+    region: "eu-central-1",
+    endpoint: "https://smartclerk.ai",
+    monthlyCost: { amount: 1_800, currency: "USD" },
+    useCaseLabels: ["Process Automation", "Data Management"],
+    tags: { env: "production", team: "finance", category: "business-productivity", pricing: "subscription", planName: "Growth", pricePerSeat: "49", billingCycle: "monthly", seats: 37, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "springbase::productivity::springbase-prod",
+    name: "Springbase — AI CRM & Sales Automation",
+    provider: "Springbase",
+    modelId: "springbase-v1",
+    region: "us-west-2",
+    endpoint: "https://springbase.ai",
+    monthlyCost: { amount: 3_300, currency: "USD" },
+    useCaseLabels: ["Sales Automation", "Workflow Automation"],
+    tags: { env: "production", team: "sales", category: "business-productivity", pricing: "subscription", planName: "Pro", pricePerSeat: "79", billingCycle: "monthly", seats: 42, owner: "dave@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "foundersplan::productivity::foundersplan-prod",
+    name: "FoundersPlan — AI Business Plan Generator",
+    provider: "Founders Plan",
+    modelId: "foundersplan-v1",
+    region: "us-east-1",
+    endpoint: "https://foundersplan.ai",
+    monthlyCost: { amount: 1_500, currency: "USD" },
+    useCaseLabels: ["Document Creation", "Research Automation"],
+    tags: { env: "production", team: "strategy", category: "business-productivity", pricing: "subscription", planName: "Starter", pricePerSeat: "29", billingCycle: "monthly", seats: 52, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "slite::productivity::slite-prod",
+    name: "Slite — AI Knowledge Base",
+    provider: "Slite",
+    modelId: "slite-ai-v2",
+    region: "eu-west-1",
+    endpoint: "https://slite.com",
+    monthlyCost: { amount: 2_900, currency: "USD" },
+    useCaseLabels: ["Knowledge Management", "Document Creation"],
+    tags: { env: "production", team: "ops", category: "business-productivity", pricing: "freemium", planName: "Standard", pricePerSeat: "12.5", billingCycle: "monthly", seats: 232, owner: "alice@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "tana::productivity::tana-ai-prod",
+    name: "Tana AI — Knowledge Graph Platform",
+    provider: "Tana AI",
+    modelId: "tana-v2",
+    region: "eu-central-1",
+    endpoint: "https://tana.inc",
+    monthlyCost: { amount: 2_200, currency: "USD" },
+    useCaseLabels: ["Knowledge Management", "Research Automation"],
+    tags: { env: "production", team: "product", category: "business-productivity", pricing: "freemium", planName: "Teams", pricePerSeat: "14", billingCycle: "monthly", seats: 157, owner: "bob@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "reuben::productivity::reuben-ai-prod",
+    name: "Reuben AI — Private Capital Due Diligence",
+    provider: "Reuben AI",
+    modelId: "reuben-v1",
+    region: "eu-west-1",
+    endpoint: "https://reubenai.com",
+    monthlyCost: { amount: 5_800, currency: "USD" },
+    useCaseLabels: ["Research Automation", "Data Management"],
+    tags: { env: "production", team: "finance", category: "business-productivity", pricing: "subscription", planName: "Enterprise", pricePerSeat: "299", billingCycle: "monthly", seats: 19, owner: "dave@acme.com" },
+    observedAt: new Date("2026-06-01T06:00:00Z"),
+  },
+  {
+    id: "chatronix::productivity::chatronix-prod",
+    name: "Chatronix — Custom Business Chatbots",
+    provider: "Chatronix",
+    modelId: "chatronix-v1",
+    region: "ap-southeast-1",
+    endpoint: "https://chatronix.ai",
+    monthlyCost: { amount: 2_000, currency: "USD" },
+    useCaseLabels: ["Customer Support", "Workflow Automation"],
+    tags: { env: "production", team: "cx-ai", category: "business-productivity", pricing: "freemium", planName: "Growth", pricePerSeat: "49", billingCycle: "monthly", seats: 41, owner: "carol@acme.com" },
     observedAt: new Date("2026-06-01T06:00:00Z"),
   },
 ];
 
-const IDENTITY_GRANTS: IdentityGrant[] = [
-  {
-    id: "grant-001",
-    principal: "alice@acme.com",
-    principalKind: "human",
-    resourceId: "aws::ec2::i-0a1b2c3d4e5f60001",
-    resourceKind: "asset",
-    grantLevel: "admin",
-    source: "telemetry",
-    observedAt: new Date("2026-05-15T09:00:00Z"),
-  },
-  {
-    id: "grant-002",
-    principal: "svc-ml-pipeline@acme-prod.iam.gserviceaccount.com",
-    principalKind: "service_account",
-    resourceId: "aws::s3::arn:aws:s3:::sentinel-training-data",
-    resourceKind: "asset",
-    grantLevel: "write",
-    source: "telemetry",
-    observedAt: new Date("2026-05-15T09:00:00Z"),
-  },
-  {
-    id: "grant-003",
-    principal: "bob@acme.com",
-    principalKind: "human",
-    resourceId: "anthropic::deployment::churn-claude35-prod",
-    resourceKind: "model_deployment",
-    grantLevel: "read",
-    source: "telemetry",
-    observedAt: new Date("2026-05-20T11:00:00Z"),
-  },
-  {
-    id: "grant-004",
-    principal: "ml-engineers@acme.com",
-    principalKind: "group",
-    resourceId: "aws::ec2::i-0a1b2c3d4e5f60002",
-    resourceKind: "asset",
-    grantLevel: "admin",
-    source: "telemetry",
-    observedAt: new Date("2026-05-20T11:00:00Z"),
-  },
-  {
-    id: "grant-005",
-    principal: "svc-fraud-scorer@acme-prod.iam.gserviceaccount.com",
-    principalKind: "service_account",
-    resourceId: "openai::deployment::fraud-gpt4o-prod",
-    resourceKind: "model_deployment",
-    grantLevel: "write",
-    source: "telemetry",
-    observedAt: new Date("2026-05-28T14:00:00Z"),
-  },
-  {
-    id: "grant-006",
-    // Overly broad — will trigger a risk flag in Phase 5
-    principal: "contractors@acme.com",
-    principalKind: "group",
-    resourceId: "aws::s3::arn:aws:s3:::sentinel-training-data",
-    resourceKind: "asset",
-    grantLevel: "read",
-    source: "manual",
-    observedAt: new Date("2026-05-30T16:00:00Z"),
-  },
-];
+const IDENTITY_GRANTS: IdentityGrant[] = [];
 
-const EGRESS_EVENTS: EgressEvent[] = [
-  {
-    id: "egress-001",
-    sourceId: "aws::ec2::i-0a1b2c3d4e5f60001",
-    destination: "s3://sentinel-model-artefacts",
-    direction: "internal",
-    bytes: 4_300_000_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T02:00:00Z"),
-  },
-  {
-    id: "egress-002",
-    sourceId: "openai::deployment::fraud-gpt4o-prod",
-    destination: "https://api.openai.com",
-    direction: "external",
-    bytes: 820_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T03:15:00Z"),
-  },
-  {
-    id: "egress-003",
-    sourceId: "anthropic::deployment::churn-claude35-prod",
-    destination: "https://api.anthropic.com",
-    direction: "external",
-    bytes: 430_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T03:20:00Z"),
-  },
-  {
-    id: "egress-004",
-    // EU model hitting a US endpoint — potential GDPR residency flag (Phase 5)
-    sourceId: "aws::ec2::i-0a1b2c3d4e5f60002",
-    destination: "https://api.openai.com",
-    direction: "cross_border",
-    bytes: 120_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T04:00:00Z"),
-  },
-  {
-    id: "egress-005",
-    sourceId: "aws::s3::arn:aws:s3:::sentinel-training-data",
-    destination: "s3://acme-data-lake-us-east-1",
-    direction: "internal",
-    bytes: 9_800_000_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T01:00:00Z"),
-  },
-  {
-    id: "egress-006",
-    sourceId: "aws::ec2::i-0a1b2c3d4e5f60003",
-    destination: "https://hooks.slack.com",
-    direction: "external",
-    bytes: 14_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T05:00:00Z"),
-  },
-  {
-    id: "egress-007",
-    sourceId: "aws::s3::arn:aws:s3:::sentinel-model-artefacts",
-    destination: "https://partner-api.eu-clearing.com",
-    direction: "cross_region",
-    bytes: 52_000_000,
-    destinationJurisdiction: "EU",
-    observedAt: new Date("2026-06-01T05:30:00Z"),
-  },
-  {
-    id: "egress-008",
-    // Unexpected external destination — shadow egress, will surface in Phase 4
-    sourceId: "aws::ec2::i-0a1b2c3d4e5f60003",
-    destination: "https://unknown-analytics.io",
-    direction: "external",
-    bytes: 88_000,
-    destinationJurisdiction: "US",
-    observedAt: new Date("2026-06-01T05:45:00Z"),
-  },
-];
+const EGRESS_EVENTS: EgressEvent[] = [];
 
 // ---------------------------------------------------------------------------
 // MockCloudConnector
@@ -259,7 +588,7 @@ const EGRESS_EVENTS: EgressEvent[] = [
 
 export class MockCloudConnector implements IConnector {
   readonly id = "mock-cloud-connector-v1";
-  readonly name = "Mock Cloud Connector (AWS/OpenAI/Anthropic)";
+  readonly name = "Mock Connector — Business Productivity AI Tools";
 
   async listAssets(): Promise<Asset[]> {
     return structuredClone(ASSETS);

@@ -1,166 +1,93 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCoverage } from "@/lib/api";
-import { Card, CardTitle } from "@/components/Card";
+import { PageHeader } from "@/components/PageHeader";
 
-export const metadata: Metadata = { title: "Coverage Report" };
+export const metadata: Metadata = { title: "Coverage" };
 
-const BLIND_SPOT_LABELS: Record<string, string> = {
-  LOW_CONFIDENCE_UNCONFIRMED: "Low Confidence — Unconfirmed",
-  ASSET_NO_USE_CASE:          "Asset Not Linked to Use Case",
-  USE_CASE_NO_ASSETS:         "Use Case Has No Assets",
-  MANUAL_ONLY_NODE:           "Manual Entry — No Telemetry",
-  UNTAGGED_ASSET:             "Untagged Asset",
-};
-
-const BLIND_SPOT_COLORS: Record<string, string> = {
-  LOW_CONFIDENCE_UNCONFIRMED: "text-[#f87171]",
-  ASSET_NO_USE_CASE:          "text-[#fbbf24]",
-  USE_CASE_NO_ASSETS:         "text-[#fbbf24]",
-  MANUAL_ONLY_NODE:           "text-[#f59e0b]",
-  UNTAGGED_ASSET:             "text-[#f87171]",
-};
-
-export default async function CoveragePage() {
-  let report;
-  try {
-    report = await getCoverage();
-  } catch {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-[#e4e4f0]">Coverage Report</h1>
-        <Card>
-          <p className="text-[#f87171] text-sm">Could not load coverage data. Is the API running?</p>
-        </Card>
-      </div>
-    );
-  }
-
-  const score = report.coverageScore;
-  const scoreColor = score >= 80 ? "#4ade80" : score >= 50 ? "#fbbf24" : "#f87171";
-  const circumference = 2 * Math.PI * 54;
-  const dash = (score / 100) * circumference;
-
-  // Group blind spots by kind
-  const grouped = report.blindSpots.reduce<Record<string, typeof report.blindSpots>>((acc, bs) => {
-    (acc[bs.kind] ??= []).push(bs);
-    return acc;
-  }, {});
-
+export default function CoveragePage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#e4e4f0]">Coverage Report</h1>
-        <p className="text-[#8b8ba8] text-sm mt-1">
-          Computed at {new Date(report.computedAt).toLocaleString()}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Assess"
+        title="Coverage"
+        subtitle="Estate coverage scoring, blind-spot detection, and insurance-grade telemetry."
+      />
 
-      {/* Score + stats */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {/* Donut chart */}
-        <Card className="flex flex-col items-center justify-center py-6">
-          <svg width="140" height="140" viewBox="0 0 140 140">
-            <circle cx="70" cy="70" r="54" fill="none" stroke="#2a2a38" strokeWidth="12" />
-            <circle
-              cx="70" cy="70" r="54"
-              fill="none"
-              stroke={scoreColor}
-              strokeWidth="12"
-              strokeDasharray={`${dash} ${circumference}`}
-              strokeLinecap="round"
-              transform="rotate(-90 70 70)"
-              style={{ filter: `drop-shadow(0 0 8px ${scoreColor}66)` }}
-            />
-            <text x="70" y="70" textAnchor="middle" dominantBaseline="central"
-              fill={scoreColor} fontSize="24" fontWeight="bold">{score}%</text>
-            <text x="70" y="90" textAnchor="middle" fill="#5b5b70" fontSize="10">coverage</text>
-          </svg>
-        </Card>
+      {/* Coming soon card */}
+      <div className="rounded-2xl border border-[#2a2825] bg-[#1e1c1a] overflow-hidden">
+        {/* Top accent */}
+        <div className="h-1 bg-gradient-to-r from-[#8A9C8B] via-[#C4924A] to-[#C86F58]" />
 
-        <Card>
-          <CardTitle>Node Breakdown</CardTitle>
-          <dl className="space-y-3">
-            <div className="flex justify-between">
-              <dt className="text-sm text-[#8b8ba8]">Total nodes</dt>
-              <dd className="text-sm font-semibold text-[#e4e4f0]">{report.totalNodes}</dd>
+        <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-6">
+          {/* Icon */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-[#1e2420] border border-[#8A9C8B25] flex items-center justify-center">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <path
+                  d="M18 3L33 9V21C33 28.5 26 33.5 18 36C10 33.5 3 28.5 3 21V9L18 3Z"
+                  stroke="#8A9C8B" strokeWidth="2" strokeLinejoin="round" fill="none"
+                />
+                <path d="M11 18l5 5 9-9" stroke="#8A9C8B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-sm text-[#8b8ba8]">From telemetry</dt>
-              <dd className="text-sm font-semibold text-[#4ade80]">{report.telemetryNodes}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-sm text-[#8b8ba8]">Manual entries</dt>
-              <dd className="text-sm font-semibold text-[#fbbf24]">{report.manualNodes}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-sm text-[#8b8ba8]">Awaiting confirmation</dt>
-              <dd className={`text-sm font-semibold ${report.unconfirmedLowConfidence > 0 ? "text-[#f87171]" : "text-[#4ade80]"}`}>
-                {report.unconfirmedLowConfidence}
-              </dd>
-            </div>
-          </dl>
-        </Card>
+            {/* Pulse ring */}
+            <span className="absolute -inset-1 rounded-2xl border border-[#8A9C8B20] animate-ping" style={{ animationDuration: "3s" }} />
+          </div>
 
-        <Card>
-          <CardTitle>Blind Spot Summary</CardTitle>
-          {report.blindSpots.length === 0 ? (
-            <p className="text-sm text-[#4ade80]">No blind spots detected.</p>
-          ) : (
-            <dl className="space-y-2">
-              {Object.entries(grouped).map(([kind, items]) => (
-                <div key={kind} className="flex justify-between">
-                  <dt className={`text-xs ${BLIND_SPOT_COLORS[kind] ?? "text-[#8b8ba8]"}`}>
-                    {BLIND_SPOT_LABELS[kind] ?? kind}
-                  </dt>
-                  <dd className="text-xs font-semibold text-[#e4e4f0]">{items.length}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </Card>
-      </div>
+          {/* Text */}
+          <div className="space-y-2 max-w-md">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C4924A12] border border-[#C4924A30] mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#d4a96a] animate-pulse" />
+              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#d4a96a]">Coming Soon</span>
+            </div>
+            <h2 className="text-[22px] font-black text-[#D9C8B4] leading-tight">
+              Coverage &amp; Insurance Insights
+            </h2>
+            <p className="text-[13px] text-[#9a9078] leading-relaxed">
+              Full estate coverage scoring, blind-spot detection, and insurance-grade telemetry are on the roadmap.
+              This module will require integration with Insurance APIs to score your AI coverage posture.
+            </p>
+          </div>
 
-      {/* Mandatory disclaimer — Principle 3 */}
-      <div className="flex gap-3 p-4 rounded-xl border border-[#f59e0b44] bg-[#f59e0b08]">
-        <span className="text-[#fbbf24] flex-shrink-0 text-lg">⚠</span>
-        <div>
-          <p className="text-xs font-semibold text-[#fbbf24] mb-1">Coverage disclaimer (required in all exports)</p>
-          <p className="text-xs text-[#8b8ba8] leading-relaxed">{report.disclaimer}</p>
-        </div>
-      </div>
-
-      {/* Blind spots detail */}
-      {report.blindSpots.length > 0 && (
-        <Card>
-          <CardTitle>Blind Spots — Full Detail ({report.blindSpots.length})</CardTitle>
-          <div className="space-y-3">
-            {Object.entries(grouped).map(([kind, items]) => (
-              <div key={kind}>
-                <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${BLIND_SPOT_COLORS[kind] ?? "text-[#8b8ba8]"}`}>
-                  {BLIND_SPOT_LABELS[kind] ?? kind} ({items.length})
-                </h3>
-                <ul className="space-y-1 pl-3">
-                  {items.map((bs) => (
-                    <li key={bs.nodeId} className="flex items-start gap-2 text-sm">
-                      <span className="text-[#2a2a38] mt-1">·</span>
-                      <span>
-                        <Link
-                          href={`/nodes/${encodeURIComponent(bs.nodeId)}`}
-                          className="text-[#a5b4fc] hover:underline font-medium"
-                        >
-                          {bs.label}
-                        </Link>
-                        <span className="text-[#5b5b70] ml-2 text-xs">{bs.description}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Feature preview */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-xl mt-2">
+            {[
+              { icon: "📊", title: "Coverage Score",      desc: "Real-time % of AI estate with active monitoring" },
+              { icon: "🔍", title: "Blind Spot Detection", desc: "Assets and use cases without telemetry coverage"  },
+              { icon: "🛡️", title: "Insurance Mapping",   desc: "Map coverage gaps to insurance policy requirements" },
+            ].map(({ icon, title, desc }) => (
+              <div key={title} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[#2a2825] bg-[#191817]">
+                <span className="text-2xl">{icon}</span>
+                <p className="text-[12px] font-semibold text-[#9a9078]">{title}</p>
+                <p className="text-[10.5px] text-[#5c5248] text-center leading-snug">{desc}</p>
               </div>
             ))}
           </div>
-        </Card>
-      )}
+
+          {/* CTA */}
+          <div className="flex items-center gap-3 mt-2">
+            <Link
+              href="/"
+              className="px-5 py-2.5 rounded-lg bg-[#8A9C8B] text-[#1a1918] text-[12.5px] font-semibold hover:bg-[#9baf9c] transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+            <a
+              href="mailto:support@sentinel.ai?subject=Coverage+Module+Interest"
+              className="px-5 py-2.5 rounded-lg border border-[#2a2825] text-[#9a9078] text-[12.5px] font-medium hover:text-[#D9C8B4] hover:border-[#3a3835] transition-colors"
+            >
+              Express Interest
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Current basic stats (from existing data) */}
+      <p className="text-[11px] text-[#3a3430] text-center">
+        Basic coverage indicators are visible on the{" "}
+        <Link href="/" className="text-[#8A9C8B] hover:text-[#9baf9c] transition-colors">Dashboard</Link>
+        {" "}until the full Coverage module launches.
+      </p>
     </div>
   );
 }

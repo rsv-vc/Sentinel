@@ -79,12 +79,125 @@ enumerated list of known blind spots. Never claims completeness.
 
 ## Current state / next slice
 
-- **Phase completed:** Phase 4 — Continuous sync, evolving mock connector, changes feed
-- **Next unbuilt slice:** Phase 5 — Risk & compliance engine
+- **Phase completed:** Phase 9 — Demo-ready dashboard
+- **Next unbuilt slice:** Further polish or new features as needed
 - **Known issues / TODOs:**
   - Migration must be run manually (`npm run db:migrate`) after `docker:up` — no auto-migrate on startup yet.
   - No auth yet (Phase 8).
-  - `packages/web` has no Tailwind — will add in Phase 3.
+
+## Auth & RBAC (as-built, Phase 8)
+
+**DB addition:** `User` model — id, email, passwordHash (bcrypt), name, role (ADMIN|ANALYST|VIEWER), timestamps. Migration: `phase8_auth`.
+
+**Demo users** (seeded via `npm run seed` in `packages/db`):
+| Role    | Email                     | Password                  |
+|---------|---------------------------|---------------------------|
+| ADMIN   | admin@sentinel.local      | sentinel-admin-2024       |
+| ANALYST | analyst@sentinel.local    | sentinel-analyst-2024     |
+| VIEWER  | viewer@sentinel.local     | sentinel-viewer-2024      |
+
+**`packages/api/src/auth/`**
+- `jwt.ts` — `signToken` / `verifyToken`, 8h expiry, secret from `JWT_SECRET` env
+- `middleware.ts` — `requireAuth` (401 on missing/invalid token), `requireRole(...roles)` (403)
+- Token read from `sentinel_token` httpOnly cookie **or** `Authorization: Bearer` header
+
+**API routes:**
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/auth/login` | Public — returns JWT in cookie + body |
+| GET  | `/api/auth/me`    | requireAuth |
+| POST | `/api/auth/logout`| Public — clears cookie |
+
+**Role enforcement on existing routes:**
+- All `/api/*` routes: `requireAuth` (any valid role)
+- `/api/sync`, `/api/rectifications`: `requireRole("ADMIN", "ANALYST")`
+
+**Web (Phase 8):**
+- `src/middleware.ts` — Next.js edge middleware; redirects to `/login` if `sentinel_token` cookie missing/invalid. Uses `jose` (edge-compatible).
+- `/login` page — full-screen, no Nav, demo credentials hint, `LoginForm` client component
+- `Nav` — reads JWT cookie server-side via `cookies()`, renders `UserChip` (role pill + email + sign-out button) or "Local prototype" tag
+- `UserChip` client component — calls `POST /api/auth/logout` then redirects to `/login`
+- `packages/web/.env.local` — `JWT_SECRET` (must match API)
+- CORS updated to `credentials: true`; `apiFetch` updated to `credentials: "include"`
+
+## Rectification workflow (as-built, Phase 7)
+
+**DB schema additions:**
+- `Rectification` — id, title, description, nodeId?, obligationId?, dimensionId?, status (OPEN|IN_PROGRESS|RESOLVED|WONT_FIX), priority (LOW|MEDIUM|HIGH|CRITICAL), actor, dueDate?, resolvedAt?, timestamps
+- `RectificationEvidence` — id, rectificationId, content, actor, createdAt (append-only — no update/delete)
+- `EventType` extended with: RECTIFICATION_OPENED, RECTIFICATION_UPDATED, RECTIFICATION_RESOLVED, EVIDENCE_FILED
+- Migration: `20260603090119_phase7_rectification`
+
+**`packages/db/src/`**
+- `IRectificationRepository` — create, get, list, update, resolve, fileEvidence, listEvidence (no deleteEvidence — append-only)
+- `PrismaRectificationRepository` — concrete implementation
+
+**API routes (Phase 7):**
+| Method | Path | Description |
+|--------|------|-------------|
+| POST   | `/api/rectifications` | Open a new rectification |
+| GET    | `/api/rectifications` | List (filter ?nodeId, ?status, ?obligationId) |
+| GET    | `/api/rectifications/:id` | Get with evidence |
+| PATCH  | `/api/rectifications/:id` | Update title/description/priority/status/dueDate |
+| POST   | `/api/rectifications/:id/resolve` | Mark resolved (writes resolvedAt) |
+| POST   | `/api/rectifications/:id/evidence` | File evidence (append-only) |
+| GET    | `/api/rectifications/:id/evidence` | List evidence |
+
+**Web (Phase 7):**
+- `RectificationPanel` client component — new form, status transitions (OPEN → IN_PROGRESS → RESOLVED / WONT_FIX), evidence filing, evidence trail display, closed items in collapsible `<details>`
+- `/rectifications` overview page — KPI row (Open/In Progress/Resolved/Won't Fix counts)
+- Use-case detail page (`/use-cases/[id]`) — Rectifications card with panel, pre-linked to nodeId
+- "Rectify" added to main Nav
+
+## Board report export (as-built, Phase 6)
+
+**`packages/core/src/reports/BoardReportBuilder`**
+- Assembles `BoardReport` from: CoverageCalculator + RiskEngine (all use-cases) + ComplianceEngine (all use-cases)
+- Three sections: `coverage` (always with `disclaimer` + `blindSpots`), `risk` (per-use-case summaries + concentration flags), `compliance` (top gaps sorted by affected use-case count)
+- `meta` includes `generatedAt`, `dataAsOf`, `totalSyncRuns`, `sentinelVersion`
+
+**`packages/api/src/reports/`**
+- `pdf.renderer.ts` — `pdfkit`-based PDF, A4, covers all three sections, prints Principle 5 disclaimer before compliance section
+- `csv.renderer.ts` — multi-section CSV, Excel/Sheets compatible, all fields labeled
+
+**API routes (Phase 6):**
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/reports/board` | Full BoardReport JSON |
+| GET | `/api/reports/board.csv` | CSV download (filename includes date) |
+| GET | `/api/reports/board.pdf` | PDF download (filename includes date) |
+
+**Web (Phase 6):**
+- `/reports` page: meta row, Coverage section (score + blind spots + disclaimer), Risk section (KPI row, concentration flags, use-case table), Compliance section (disclaimer first, top gaps)
+- "Report" added to main Nav
+- Two download buttons link directly to `/api/reports/board.csv` and `/api/reports/board.pdf`
+
+## Risk & Compliance engine (as-built, Phase 5)
+
+**`packages/core/src/risk/`**
+- `RiskEngine` — scores each UseCase across 5 dimensions: vendor, contractual, data, modelBehaviour, resilience
+- `modelBehaviour` is always `UN_ASSESSED` unless an asset has an `evalStatus` attribute (never auto-"passed")
+- Portfolio report: `portfolioReport()` → vendor concentration flags (≥40 % of use-cases = flagged)
+- Residual = worst dimension; UN_ASSESSED propagates to residual
+
+**`packages/core/src/compliance/`**
+- `ComplianceEngine.assessUseCase()` → `UseCaseComplianceReport`
+- Versioned rule-sets in `rules.ts`: GDPR v1.1.0 (eff. 2024-01-01), EU AI Act v1.0.0 (eff. 2025-08-01), DPDP v1.0.0 (eff. 2024-01-01)
+- Obligations triggered by jurisdiction, data asset presence, model presence, cross-border transfer
+- `GapStatus`: `GAP | PARTIAL | EVIDENCED` — only upgrades to EVIDENCED when affirmative graph evidence is present
+- Principle 5 disclaimer always present on every report
+
+**API routes (Phase 5):**
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/use-cases/:id/risk` | Risk report (5 dimensions + residual) |
+| GET | `/api/use-cases/:id/compliance` | Compliance obligations & gap analysis |
+| GET | `/api/risk/portfolio` | Portfolio concentration + summary |
+
+**Web (Phase 5):**
+- Use-case detail page (`/use-cases/[id]`) now shows Risk Assessment card + Compliance Obligations card
+- Residual risk pill in the title area
+- Compliance card shows context flags (cross-border, personal data, model), obligation list with gap status, and the mandatory Principle 5 disclaimer
 
 ## Graph model (as-built, Phase 2)
 

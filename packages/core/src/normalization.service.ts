@@ -38,12 +38,140 @@ import { nodeId } from "./deterministic-id";
 // ---------------------------------------------------------------------------
 
 const REGION_JURISDICTION: Record<string, string> = {
-  "us-east-1": "US",
-  "us-west-2": "US",
-  "eu-west-1": "EU",
+  // United States
+  "us-east-1":    "US",
+  "us-east-2":    "US",
+  "us-west-1":    "US",
+  "us-west-2":    "US",
+  "us-central1":  "US",
+  "eastus":       "US",
+  "eastus2":      "US",
+  "westus":       "US",
+  "westus2":      "US",
+  "centralus":    "US",
+  // European Union
+  "eu-west-1":    "EU",
+  "eu-west-3":    "EU",
+  "eu-west-4":    "EU",
   "eu-central-1": "EU",
+  "eu-central":   "EU",
+  "eu-north-1":   "EU",
+  "eu-south-1":   "EU",
+  "europe-west1": "EU",
+  "europe-west4": "EU",
+  "germanywestcentral": "EU",
+  "swedencentral": "EU",
+  // United Kingdom
+  "eu-west-2":    "GB",
+  "lon1":         "GB",
+  "uksouth":      "GB",
+  "ukwest":       "GB",
+  // Singapore
   "ap-southeast-1": "SG",
+  // Japan
   "ap-northeast-1": "JP",
+  "japaneast":    "JP",
+  "japanwest":    "JP",
+  // Australia
+  "ap-southeast-2": "AU",
+  "australiaeast":  "AU",
+  // Canada
+  "ca-central-1": "CA",
+  "canadacentral": "CA",
+  // Brazil
+  "sa-east-1":    "BR",
+  "brazilsouth":  "BR",
+  // India
+  "ap-south-1":   "IN",
+  "centralindia": "IN",
+  // China (Mainland)
+  "cn-north-1":   "CN",
+  "cn-northwest-1": "CN",
+  "chinanorth":   "CN",
+  "chinaeast":    "CN",
+};
+
+// ---------------------------------------------------------------------------
+// Jurisdiction metadata — human-readable labels and compliance context
+// ---------------------------------------------------------------------------
+
+const JURISDICTION_META: Record<string, {
+  label: string;
+  flag: string;
+  primaryRegulations: string[];
+  enforcementBody: string;
+  aiFramework: string;
+}> = {
+  US: {
+    label: "United States",
+    flag: "🇺🇸",
+    primaryRegulations: ["NIST AI RMF 1.0", "Executive Order 14110", "CCPA (California)"],
+    enforcementBody: "NIST / FTC / Sector regulators",
+    aiFramework: "NIST AI Risk Management Framework",
+  },
+  EU: {
+    label: "European Union",
+    flag: "🇪🇺",
+    primaryRegulations: ["GDPR", "EU AI Act (Reg. 2024/1689)", "NIS2 Directive"],
+    enforcementBody: "National DPAs / EU AI Office",
+    aiFramework: "EU AI Act (Annex III risk categories)",
+  },
+  GB: {
+    label: "United Kingdom",
+    flag: "🇬🇧",
+    primaryRegulations: ["UK GDPR", "Data Protection Act 2018", "ICO AI Guidance 2024"],
+    enforcementBody: "ICO / DSIT",
+    aiFramework: "UK DSIT AI Regulation Principles (2023)",
+  },
+  SG: {
+    label: "Singapore",
+    flag: "🇸🇬",
+    primaryRegulations: ["PDPA 2012 (amended 2021)", "MAS FEAT Principles", "AI Verify Framework"],
+    enforcementBody: "PDPC / MAS",
+    aiFramework: "IMDA Model AI Governance Framework 2020",
+  },
+  JP: {
+    label: "Japan",
+    flag: "🇯🇵",
+    primaryRegulations: ["APPI (amended 2022)", "METI AI Guidelines 2024", "Basic Act on AI"],
+    enforcementBody: "PPC / METI",
+    aiFramework: "METI AI Guidelines for Business 2024",
+  },
+  AU: {
+    label: "Australia",
+    flag: "🇦🇺",
+    primaryRegulations: ["Privacy Act 1988 (amended 2024)", "AI Ethics Framework", "Security of Critical Infrastructure Act"],
+    enforcementBody: "OAIC / DISR",
+    aiFramework: "Australia AI Ethics Framework (8 principles)",
+  },
+  CA: {
+    label: "Canada",
+    flag: "🇨🇦",
+    primaryRegulations: ["PIPEDA / Bill C-27 (CPPA)", "AIDA (Artificial Intelligence and Data Act)", "Quebec Law 25"],
+    enforcementBody: "OPC / ISED",
+    aiFramework: "AIDA — Artificial Intelligence and Data Act",
+  },
+  BR: {
+    label: "Brazil",
+    flag: "🇧🇷",
+    primaryRegulations: ["LGPD (Lei Geral de Proteção de Dados)", "PL 2338/2023 (AI Bill)"],
+    enforcementBody: "ANPD",
+    aiFramework: "PL 2338/2023 — Brazilian AI Framework (proposed)",
+  },
+  IN: {
+    label: "India",
+    flag: "🇮🇳",
+    primaryRegulations: ["DPDP Act 2023", "IT Act 2000", "SEBI AI/ML Guidelines"],
+    enforcementBody: "Data Protection Board of India",
+    aiFramework: "MeitY Responsible AI Framework (2023)",
+  },
+  CN: {
+    label: "China",
+    flag: "🇨🇳",
+    primaryRegulations: ["PIPL 2021", "Generative AI Regulations 2023", "Algorithm Recommendation Regulations 2022"],
+    enforcementBody: "CAC / MIIT",
+    aiFramework: "CAC Generative AI Service Management Provisions 2023",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -116,13 +244,18 @@ export class NormalizationService {
     ]);
 
     for (const jCode of jurisdictions) {
+      const meta = JURISDICTION_META[jCode];
       await this.graph.upsertNode({
         id: nodeId.jurisdiction(jCode),
         type: "JURISDICTION",
-        label: jCode === "US" ? "United States"
-             : jCode === "EU" ? "European Union"
-             : jCode,
-        attributes: { code: jCode },
+        label: meta?.label ?? jCode,
+        attributes: {
+          code: jCode,
+          flag: meta?.flag ?? "🌐",
+          primaryRegulations: meta?.primaryRegulations ?? [],
+          enforcementBody: meta?.enforcementBody ?? "Unknown",
+          aiFramework: meta?.aiFramework ?? "No framework defined",
+        },
         confidence: "HIGH",
         source: "TELEMETRY",
         connectorId: cid,

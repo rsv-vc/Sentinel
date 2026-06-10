@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -23,17 +23,17 @@ import type { SubgraphDTO } from "@/lib/api";
 // ---------------------------------------------------------------------------
 
 const TYPE_COLORS: Record<string, string> = {
-  USE_CASE:   "#6366f1",
-  ASSET:      "#3b82f6",
-  VENDOR:     "#8b8ba8",
-  DATA_ASSET: "#22c55e",
-  JURISDICTION: "#f59e0b",
+  USE_CASE:   "#8A9C8B",
+  ASSET:      "#9baf9c",
+  VENDOR:     "#9a9078",
+  DATA_ASSET: "#C4924A",
+  JURISDICTION: "#d4a456",
 };
 
 const CONFIDENCE_BORDER: Record<string, string> = {
-  HIGH:   "#22c55e",
-  MEDIUM: "#f59e0b",
-  LOW:    "#ef4444",
+  HIGH:   "#8A9C8B",
+  MEDIUM: "#C4924A",
+  LOW:    "#C86F58",
 };
 
 // ---------------------------------------------------------------------------
@@ -52,18 +52,18 @@ function toFlowNode(
   const x = isRoot ? 0 : Math.cos(angle) * radius;
   const y = isRoot ? 0 : Math.sin(angle) * radius;
 
-  const color = TYPE_COLORS[node.type] ?? "#8b8ba8";
-  const border = CONFIDENCE_BORDER[node.confidence] ?? "#5b5b70";
+  const color = TYPE_COLORS[node.type] ?? "#9a9078";
+  const border = CONFIDENCE_BORDER[node.confidence] ?? "#5c5248";
 
   return {
     id: node.id,
     position: { x, y },
     data: { label: node.label },
     style: {
-      background: "#111118",
+      background: "#1a1918",
       border: `2px solid ${isRoot ? color : border}`,
       borderRadius: "10px",
-      color: "#e4e4f0",
+      color: "#D9C8B4",
       fontSize: "12px",
       padding: "8px 12px",
       maxWidth: "160px",
@@ -79,9 +79,9 @@ function toFlowEdge(edge: SubgraphDTO["edges"][number]): Edge {
     source: edge.fromId,
     target: edge.toId,
     label: edge.type.replace(/_/g, " ").toLowerCase(),
-    style: { stroke: "#2a2a38", strokeWidth: 1.5 },
-    labelStyle: { fill: "#5b5b70", fontSize: 10 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#2a2a38" },
+    style: { stroke: "#2a2825", strokeWidth: 1.5 },
+    labelStyle: { fill: "#5c5248", fontSize: 10 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: "#2a2825" },
   };
 }
 
@@ -107,7 +107,7 @@ export function DependencyGraph({ subgraph }: { subgraph: SubgraphDTO }) {
   );
 
   return (
-    <div style={{ width: "100%", height: "460px" }} className="rounded-xl overflow-hidden border border-[#2a2a38]">
+    <div style={{ width: "100%", height: "460px" }} className="rounded-xl overflow-hidden border border-[#2a2825]">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -119,12 +119,12 @@ export function DependencyGraph({ subgraph }: { subgraph: SubgraphDTO }) {
         style={{ background: "#0d0d14" }}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2a38" />
-        <Controls style={{ background: "#111118", border: "1px solid #2a2a38" }} />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2825" />
+        <Controls style={{ background: "#1a1918", border: "1px solid #2a2825" }} />
         <MiniMap
-          style={{ background: "#111118", border: "1px solid #2a2a38" }}
-          nodeColor={(n) => TYPE_COLORS[(n.data as { type?: string })?.type ?? ""] ?? "#6366f1"}
-          maskColor="#09090faa"
+          style={{ background: "#1a1918", border: "1px solid #2a2825" }}
+          nodeColor={(n) => TYPE_COLORS[(n.data as { type?: string })?.type ?? ""] ?? "#8A9C8B"}
+          maskColor="#1a1918aa"
         />
       </ReactFlow>
     </div>

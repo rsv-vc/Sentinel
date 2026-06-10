@@ -8,7 +8,7 @@
     "build": "tsc",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "seed": "ts-node src/seed.ts",
+    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
     "studio": "prisma studio",
     "generate": "prisma generate"
   },
@@ -16,7 +16,10 @@
     "@prisma/client": "^5.13.0"
   },
   "devDependencies": {
+    "@types/node": "^20.12.7",
+    "bcryptjs": "^2.4.3",
     "prisma": "^5.13.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
   }
 }

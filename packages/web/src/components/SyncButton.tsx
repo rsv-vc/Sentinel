@@ -20,21 +20,22 @@ export function SyncButton() {
     }
   }
 
-  const labels = { idle: "Sync Now", syncing: "Syncing…", done: "Synced ✓", error: "Error — retry?" };
-  const colors = {
-    idle:    "bg-[#6366f1] hover:bg-[#4f46e5] text-white",
-    syncing: "bg-[#6366f144] text-[#a5b4fc] cursor-not-allowed",
-    done:    "bg-[#22c55e22] text-[#4ade80] border border-[#22c55e33]",
-    error:   "bg-[#ef444422] text-[#f87171] border border-[#ef444433]",
+  const config = {
+    idle:    { label: "Sync Now",       classes: "bg-[#8A9C8B] hover:bg-[#7a8c7b] text-[#1a1918] border-transparent font-semibold" },
+    syncing: { label: "Syncing…",      classes: "bg-[#8A9C8B18] text-[#9baf9c] border-[#8A9C8B35] cursor-not-allowed" },
+    done:    { label: "Synced ✓",      classes: "bg-[#8A9C8B18] text-[#9baf9c] border-[#8A9C8B35]" },
+    error:   { label: "Error — retry?", classes: "bg-[#C86F5818] text-[#d4836e] border-[#C86F5835]" },
   };
+
+  const { label, classes } = config[state];
 
   return (
     <button
       onClick={handleSync}
       disabled={state === "syncing"}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${colors[state]}`}
+      className={`px-4 py-2 rounded-lg text-[13px] border transition-all ${classes}`}
     >
-      {labels[state]}
+      {label}
     </button>
   );
 }

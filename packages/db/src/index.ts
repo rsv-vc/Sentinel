@@ -1,5 +1,17 @@
 export { PrismaClient } from "@prisma/client";
 export { PrismaGraphRepository } from "./graph.repository";
+export { PrismaRectificationRepository } from "./rectification.repository";
+export type {
+  IRectificationRepository,
+  RectificationWithEvidence,
+  CreateRectificationInput,
+  UpdateRectificationInput,
+  FileEvidenceInput,
+  Rectification,
+  RectificationEvidence,
+  RectificationStatus,
+  RectificationPriority,
+} from "./rectification.repository.interface";
 export type {
   AppendEventInput,
   CreateEdgeInput,

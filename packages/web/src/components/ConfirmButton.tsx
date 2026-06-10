@@ -22,7 +22,7 @@ export function ConfirmButton({ nodeId }: { nodeId: string }) {
 
   if (state === "done") {
     return (
-      <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#22c55e22] text-[#4ade80] border border-[#22c55e33]">
+      <span className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[#8A9C8B18] text-[#9baf9c] border border-[#8A9C8B35]">
         Confirmed ✓
       </span>
     );
@@ -32,10 +32,10 @@ export function ConfirmButton({ nodeId }: { nodeId: string }) {
     <button
       onClick={handleConfirm}
       disabled={state === "loading"}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
         state === "error"
-          ? "bg-[#ef444422] text-[#f87171] border border-[#ef444433]"
-          : "bg-[#f59e0b22] text-[#fbbf24] border border-[#f59e0b33] hover:bg-[#f59e0b33]"
+          ? "bg-[#C86F5818] text-[#d4836e] border border-[#C86F5835]"
+          : "bg-[#C4924A18] text-[#d4a456] border border-[#C4924A35] hover:bg-[#C4924A25]"
       }`}
     >
       {state === "loading" ? "Confirming…" : state === "error" ? "Error — retry?" : "Confirm this node"}

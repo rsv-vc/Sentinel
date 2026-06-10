@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getRecentEvents, getSyncStatus } from "@/lib/api";
+import { serverGetRecentEvents as getRecentEvents, serverGetSyncStatus as getSyncStatus } from "@/lib/serverApi";
 import { Card, CardTitle } from "@/components/Card";
 import type { EventDTO } from "@/lib/api";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState, EmptyIconActivity } from "@/components/EmptyState";
 
 export const metadata: Metadata = { title: "Recent Changes" };
 
@@ -11,13 +13,13 @@ export const metadata: Metadata = { title: "Recent Changes" };
 // ---------------------------------------------------------------------------
 
 const EVENT_CONFIG: Record<string, { label: string; color: string; icon: string; highlight?: boolean }> = {
-  NODE_CREATED:               { label: "New node discovered",       color: "text-[#4ade80]",  icon: "✦", highlight: true },
-  NODE_UPDATED:               { label: "Node updated",              color: "text-[#a5b4fc]",  icon: "↻" },
-  NODE_FLAGGED_LOW_CONFIDENCE:{ label: "Flagged — needs review",    color: "text-[#fbbf24]",  icon: "⚠", highlight: true },
-  NODE_CONFIRMED:             { label: "Node confirmed",            color: "text-[#4ade80]",  icon: "✓" },
-  EDGE_CREATED:               { label: "New relationship",          color: "text-[#818cf8]",  icon: "⟶" },
-  EDGE_REMOVED:               { label: "Relationship removed",      color: "text-[#f87171]",  icon: "✕" },
-  SYNC_COMPLETED:             { label: "Sync completed",            color: "text-[#5b5b70]",  icon: "⟳" },
+  NODE_CREATED:               { label: "New node discovered",       color: "text-[#9baf9c]",  icon: "✦", highlight: true },
+  NODE_UPDATED:               { label: "Node updated",              color: "text-[#9baf9c]",  icon: "↻" },
+  NODE_FLAGGED_LOW_CONFIDENCE:{ label: "Flagged — needs review",    color: "text-[#d4a456]",  icon: "⚠", highlight: true },
+  NODE_CONFIRMED:             { label: "Node confirmed",            color: "text-[#9baf9c]",  icon: "✓" },
+  EDGE_CREATED:               { label: "New relationship",          color: "text-[#9baf9c]",  icon: "⟶" },
+  EDGE_REMOVED:               { label: "Relationship removed",      color: "text-[#d4836e]",  icon: "✕" },
+  SYNC_COMPLETED:             { label: "Sync completed",            color: "text-[#5c5248]",  icon: "⟳" },
 };
 
 // ---------------------------------------------------------------------------
@@ -42,7 +44,6 @@ function groupBySyncRun(events: EventDTO[]): SyncGroup[] {
   for (const evt of ordered) {
     if (evt.type === "SYNC_COMPLETED") {
       if (current.length > 0 || groups.length === 0) {
-        const payload = evt.payload as Record<string, unknown>;
         groups.push({
           syncEvent: evt,
           runLabel: `Sync run — ${new Date(evt.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`,
@@ -91,41 +92,32 @@ export default async function ChangesPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#e4e4f0]">Recent Changes</h1>
-          <p className="text-[#8b8ba8] text-sm mt-1">
-            Live event feed — grouped by sync run · auto-refreshes on page reload
-          </p>
-        </div>
-
-        {/* Scheduler status pill */}
-        {syncStatus && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#2a2a38] bg-[#111118] text-sm">
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${syncStatus.running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#5b5b70]"}`} />
-            <span className="text-[#8b8ba8]">
-              Sync {syncStatus.running ? "running" : "stopped"} ·{" "}
-              <span className="text-[#e4e4f0]">{syncStatus.totalRuns}</span> runs ·{" "}
-              every <span className="text-[#e4e4f0]">{syncStatus.intervalMs / 1000}s</span>
+      <PageHeader
+        title="Live Changes"
+        subtitle="Append-only event feed — grouped by sync run"
+        actions={syncStatus ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#2a2825] bg-[#1e1c1a] text-[12.5px]">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${syncStatus.running ? "status-dot-live" : "bg-[#2a2825]"}`} />
+            <span className="text-[#5c5248]">
+              {syncStatus.totalRuns} runs · every {syncStatus.intervalMs / 1000}s
             </span>
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
-          <p className="text-xs text-[#5b5b70] uppercase tracking-wide mb-1">Sync Runs</p>
-          <p className="text-3xl font-black text-[#e4e4f0]">{syncStatus?.totalRuns ?? groups.length}</p>
+          <p className="text-xs text-[#5c5248] uppercase tracking-wide mb-1">Sync Runs</p>
+          <p className="text-3xl font-black text-[#D9C8B4]">{syncStatus?.totalRuns ?? groups.length}</p>
         </Card>
         <Card>
-          <p className="text-xs text-[#5b5b70] uppercase tracking-wide mb-1">New Discoveries</p>
-          <p className="text-3xl font-black text-[#4ade80]">{totalNew}</p>
+          <p className="text-xs text-[#5c5248] uppercase tracking-wide mb-1">New Discoveries</p>
+          <p className="text-3xl font-black text-[#9baf9c]">{totalNew}</p>
         </Card>
         <Card>
-          <p className="text-xs text-[#5b5b70] uppercase tracking-wide mb-1">Flagged for Review</p>
-          <p className={`text-3xl font-black ${totalFlagged > 0 ? "text-[#fbbf24]" : "text-[#e4e4f0]"}`}>{totalFlagged}</p>
+          <p className="text-xs text-[#5c5248] uppercase tracking-wide mb-1">Flagged for Review</p>
+          <p className={`text-3xl font-black ${totalFlagged > 0 ? "text-[#d4a456]" : "text-[#D9C8B4]"}`}>{totalFlagged}</p>
         </Card>
       </div>
 
@@ -137,10 +129,10 @@ export default async function ChangesPage() {
             {syncStatus.connectors.map((c) => (
               <div key={c.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.status === "idle" ? "bg-[#22c55e]" : c.status === "syncing" ? "bg-[#6366f1] animate-pulse" : c.status === "error" ? "bg-[#ef4444]" : "bg-[#5b5b70]"}`} />
-                  <span className="text-[#e4e4f0] font-medium">{c.name}</span>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.status === "idle" ? "bg-[#8A9C8B]" : c.status === "syncing" ? "bg-[#C4924A] animate-pulse" : c.status === "error" ? "bg-[#C86F58]" : "bg-[#5c5248]"}`} />
+                  <span className="text-[#D9C8B4] font-medium">{c.name}</span>
                 </div>
-                <div className="flex items-center gap-4 text-[#5b5b70] text-xs">
+                <div className="flex items-center gap-4 text-[#5c5248] text-xs">
                   <span>Run #{c.currentRun}</span>
                   {c.lastSyncAt && (
                     <span>Last sync {new Date(c.lastSyncAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
@@ -158,9 +150,11 @@ export default async function ChangesPage() {
       {/* Event groups */}
       {groups.length === 0 ? (
         <Card>
-          <p className="text-sm text-[#5b5b70] text-center py-8">
-            No events yet — the background scheduler will populate this automatically.
-          </p>
+          <EmptyState
+            icon={<EmptyIconActivity />}
+            title="No events yet"
+            body="The background scheduler will populate this feed automatically on the next sync run."
+          />
         </Card>
       ) : (
         <div className="space-y-4">
@@ -169,10 +163,10 @@ export default async function ChangesPage() {
               {/* Group header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-[#5b5b70] text-sm">⟳</span>
-                  <span className="text-sm font-semibold text-[#8b8ba8]">{group.runLabel}</span>
+                  <span className="text-[#5c5248] text-sm">⟳</span>
+                  <span className="text-sm font-semibold text-[#9a9078]">{group.runLabel}</span>
                   {group.syncEvent && (
-                    <span className="text-xs text-[#5b5b70]">
+                    <span className="text-xs text-[#5c5248]">
                       {(group.syncEvent.payload as Record<string, unknown>)?.nodesUpserted as number ?? 0} nodes ·{" "}
                       {(group.syncEvent.payload as Record<string, unknown>)?.edgesUpserted as number ?? 0} edges
                     </span>
@@ -180,12 +174,12 @@ export default async function ChangesPage() {
                 </div>
                 <div className="flex gap-2">
                   {group.newDiscoveries > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#22c55e22] text-[#4ade80] border border-[#22c55e33]">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#8A9C8B18] text-[#9baf9c] border border-[#8A9C8B30]">
                       +{group.newDiscoveries} new
                     </span>
                   )}
                   {group.flagged > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#f59e0b22] text-[#fbbf24] border border-[#f59e0b33]">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#C4924A18] text-[#d4a456] border border-[#C4924A30]">
                       {group.flagged} flagged
                     </span>
                   )}
@@ -194,29 +188,29 @@ export default async function ChangesPage() {
 
               {/* Events in this group */}
               {group.events.length === 0 ? (
-                <p className="text-xs text-[#5b5b70]">No node changes in this run.</p>
+                <p className="text-xs text-[#5c5248]">No node changes in this run.</p>
               ) : (
                 <div className="space-y-1">
                   {group.events.map((evt) => {
-                    const cfg = EVENT_CONFIG[evt.type] ?? { label: evt.type, color: "text-[#8b8ba8]", icon: "·" };
+                    const cfg = EVENT_CONFIG[evt.type] ?? { label: evt.type, color: "text-[#9a9078]", icon: "·" };
                     return (
                       <div
                         key={evt.id}
-                        className={`flex items-start gap-3 py-1.5 px-2 rounded-lg text-sm ${cfg.highlight ? "bg-[#111120] border border-[#2a2a38]" : ""}`}
+                        className={`flex items-start gap-3 py-1.5 px-2 rounded-lg text-sm ${cfg.highlight ? "bg-[#1e2420] border border-[#2a2825]" : ""}`}
                       >
                         <span className={`${cfg.color} flex-shrink-0 w-4 text-center`}>{cfg.icon}</span>
                         <span className={`${cfg.color} font-medium flex-shrink-0 w-44`}>{cfg.label}</span>
                         {evt.nodeId ? (
                           <Link
                             href={`/nodes/${encodeURIComponent(evt.nodeId)}`}
-                            className="text-[#6366f1] hover:text-[#818cf8] font-mono text-xs truncate hover:underline"
+                            className="text-[#8A9C8B] hover:text-[#9baf9c] font-mono text-xs truncate hover:underline"
                           >
                             {evt.nodeId}
                           </Link>
                         ) : (
-                          <span className="text-[#5b5b70] text-xs">—</span>
+                          <span className="text-[#5c5248] text-xs">—</span>
                         )}
-                        <span className="text-[#5b5b70] text-xs ml-auto flex-shrink-0">
+                        <span className="text-[#5c5248] text-xs ml-auto flex-shrink-0">
                           {new Date(evt.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                         </span>
                       </div>

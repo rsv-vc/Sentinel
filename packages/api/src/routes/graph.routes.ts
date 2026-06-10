@@ -74,6 +74,36 @@ export function graphRouter(db: PrismaClient): Router {
   });
 
   // -------------------------------------------------------------------------
+  // GET /nodes/:id/graph
+  // Returns any node + all directly connected nodes and edges.
+  // -------------------------------------------------------------------------
+  router.get("/nodes/:id/graph", async (req: Request, res: Response) => {
+    try {
+      const root = await repo.getNodeWithEdges(req.params.id);
+      if (!root) {
+        res.status(404).json({ error: "Node not found" });
+        return;
+      }
+
+      const connectedIds = new Set<string>();
+      for (const e of root.edgesFrom) connectedIds.add(e.toId);
+      for (const e of root.edgesTo)   connectedIds.add(e.fromId);
+
+      const neighbours = await Promise.all(
+        [...connectedIds].map((id) => repo.getNode(id)),
+      );
+
+      res.json({
+        root,
+        neighbours: neighbours.filter(Boolean),
+        edges: [...root.edgesFrom, ...root.edgesTo],
+      });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // -------------------------------------------------------------------------
   // GET /nodes/:id/history
   // -------------------------------------------------------------------------
   router.get("/nodes/:id/history", async (req: Request, res: Response) => {
