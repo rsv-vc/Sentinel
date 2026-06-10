@@ -1,16 +1,5 @@
 {
-  "buildCommand": "npm install -g npm@latest && npm run build --workspace=packages/web",
+  "buildCommand": "npm run build --workspace=packages/web",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "env": {
-    "JWT_SECRET": "@jwt_secret",
-    "DATABASE_URL": "@database_url",
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
-  },
-  "roots": [
-    {
-      "src": "packages/web",
-      "path": "/"
-    }
-  ]
+  "framework": "nextjs"
 }
