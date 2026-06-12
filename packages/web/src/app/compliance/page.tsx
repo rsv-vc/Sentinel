@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { ComplianceDashboard } from "./ComplianceDashboard";
+import { MOCK_USE_CASES, MOCK_JURISDICTIONS } from "@/lib/mockAssets";
 
 export const metadata: Metadata = { title: "Compliance" };
-
-// Mock use cases
-const mockUseCases = Array(12).fill(null).map((_, i) => ({
-  id: `uc${i}`,
-  label: `Use Case ${i + 1}`,
-}));
 
 export default function CompliancePage() {
   return (
@@ -19,8 +14,8 @@ export default function CompliancePage() {
         subtitle="AI regulatory obligations by jurisdiction, policy frameworks, and use-case gap analysis."
       />
       <ComplianceDashboard
-        useCases={mockUseCases as any}
-        jurisdictions={[]}
+        useCases={MOCK_USE_CASES as any}
+        jurisdictions={MOCK_JURISDICTIONS as any}
       />
     </div>
   );

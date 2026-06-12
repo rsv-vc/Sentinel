@@ -1,3 +1,5 @@
+import { SOFTWARE_ASSETS } from "./mockAssets";
+
 export interface ToolCostBreakdown {
   toolId: string;
   toolName: string;
@@ -21,72 +23,110 @@ export interface OptimizationRecommendation {
   implementation: string;
 }
 
-export const SEEDED_COSTS: ToolCostBreakdown[] = [
-  // Software - LLM APIs
-  { toolId: "claude-api", toolName: "Claude API", vendor: "Anthropic", team: "ML Team",
-    costCategory: "Software", monthlyCostUsd: 2500, annualCostUsd: 30000, lastMonthCostUsd: 2400, utilizationPercent: 85 },
-  { toolId: "openai-gpt4", toolName: "OpenAI GPT-4", vendor: "OpenAI", team: "Data Team",
-    costCategory: "Software", monthlyCostUsd: 3200, annualCostUsd: 38400, lastMonthCostUsd: 3100, utilizationPercent: 72 },
-  { toolId: "gemini-api", toolName: "Google Gemini", vendor: "Google Cloud", team: "Research",
-    costCategory: "Software", monthlyCostUsd: 1800, annualCostUsd: 21600, lastMonthCostUsd: 1750, utilizationPercent: 45 },
+const TEAM_DISPLAY: Record<string, string> = {
+  product:  "Product",
+  "cx-ai":  "CX & AI",
+  sales:    "Sales",
+  finance:  "Finance",
+  strategy: "Strategy",
+  ops:      "Operations",
+  legal:    "Legal",
+};
 
-  // Software - Tools & SaaS
-  { toolId: "langchain", toolName: "LangChain Pro", vendor: "LangChain Inc", team: "Platform",
-    costCategory: "Software", monthlyCostUsd: 500, annualCostUsd: 6000, lastMonthCostUsd: 500, utilizationPercent: 95 },
-  { toolId: "pinecone", toolName: "Pinecone Vector DB", vendor: "Pinecone", team: "ML Team",
-    costCategory: "Software", monthlyCostUsd: 400, annualCostUsd: 4800, lastMonthCostUsd: 400, utilizationPercent: 88 },
+// Per-tool utilization estimates based on deployment type
+const UTILIZATION: Record<string, number> = {
+  "sw-claude-sonnet":  88,
+  "sw-claude-haiku":   82,
+  "sw-gpt4-turbo":     75,
+  "sw-gpt35":          70,
+  "sw-dalle3":         42,
+  "sw-whisper":        65,
+  "sw-vertex":         55,
+  "sw-bedrock":        60,
+  "sw-github-copilot": 92,
+  "sw-azure-openai":   68,
+  "sw-copilot365":     85,
+  "sw-notion-ai":      78,
+  "sw-einstein":       72,
+  "sw-intercom-fin":   80,
+  "sw-zendesk-ai":     76,
+  "sw-grammarly":      90,
+  "sw-jasper":         48,
+  "sw-mistral":        58,
+  "sw-cohere":         66,
+  "sw-pinecone":       84,
+  "sw-weaviate":       62,
+  "sw-langchain":      95,
+  "sw-hf-inference":   44,
+  "sw-together":       52,
+  "sw-databricks":     70,
+  "sw-snowflake":      74,
+  "sw-scale":          40,
+  "sw-wandb":          86,
+  "sw-elevenlabs":     55,
+  "sw-deepgram":       68,
+  "sw-glean":          79,
+  "sw-workato":        72,
+  "sw-workday-ai":     83,
+};
 
-  // GPU Compute
-  { toolId: "gpu-cluster-us", toolName: "GPU Cluster (US)", vendor: "AWS", team: "Compute Ops",
-    costCategory: "GPU", monthlyCostUsd: 8500, annualCostUsd: 102000, lastMonthCostUsd: 8200, utilizationPercent: 45 },
-  { toolId: "gpu-cluster-eu", toolName: "GPU Cluster (EU)", vendor: "GCP", team: "Compute Ops",
-    costCategory: "GPU", monthlyCostUsd: 5200, annualCostUsd: 62400, lastMonthCostUsd: 5100, utilizationPercent: 38 },
+// MoM growth ~8%: last month costs are ~93% of current
+function lastMonth(current: number): number {
+  return Math.round(current * 0.93);
+}
 
-  // Training & Fine-tuning
-  { toolId: "model-training", toolName: "Model Training Jobs", vendor: "Internal", team: "ML Team",
-    costCategory: "Training", monthlyCostUsd: 1200, annualCostUsd: 14400, lastMonthCostUsd: 1200, utilizationPercent: 100 },
-  { toolId: "finetuning-api", toolName: "Fine-tuning API", vendor: "OpenAI", team: "Data Team",
-    costCategory: "Training", monthlyCostUsd: 800, annualCostUsd: 9600, lastMonthCostUsd: 600, utilizationPercent: 62 },
-
-  // Infrastructure
-  { toolId: "cloud-storage", toolName: "Cloud Storage (S3)", vendor: "AWS", team: "Infra",
-    costCategory: "Infrastructure", monthlyCostUsd: 800, annualCostUsd: 9600, lastMonthCostUsd: 750, utilizationPercent: 68 },
-  { toolId: "vector-storage", toolName: "Vector Storage", vendor: "GCP", team: "ML Team",
-    costCategory: "Infrastructure", monthlyCostUsd: 600, annualCostUsd: 7200, lastMonthCostUsd: 550, utilizationPercent: 72 },
-  { toolId: "logging-monitoring", toolName: "Logging & Monitoring", vendor: "Datadog", team: "Infra",
-    costCategory: "Infrastructure", monthlyCostUsd: 1200, annualCostUsd: 14400, lastMonthCostUsd: 1200, utilizationPercent: 90 },
-];
+export const SEEDED_COSTS: ToolCostBreakdown[] = SOFTWARE_ASSETS.map((a) => {
+  const attrs = a.attributes as any;
+  const monthly = attrs.monthlyCostUsd as number;
+  return {
+    toolId:              a.id,
+    toolName:            a.label,
+    vendor:              attrs.vendor,
+    team:                TEAM_DISPLAY[attrs.tags?.team] ?? attrs.tags?.team ?? "Other",
+    costCategory:        "Software" as const,
+    monthlyCostUsd:      monthly,
+    annualCostUsd:       monthly * 12,
+    lastMonthCostUsd:    lastMonth(monthly),
+    utilizationPercent:  UTILIZATION[a.id] ?? 60,
+  };
+});
 
 export const OPTIMIZATION_RECS: OptimizationRecommendation[] = [
   {
     id: "rec-1",
     type: "consolidation",
-    title: "Consolidate LLM providers",
-    description: "Both Claude and GPT-4 are used. Consolidating to Claude API would reduce costs by negotiated enterprise pricing.",
-    affectedTools: ["claude-api", "openai-gpt4"],
-    potentialSavingsUsd: 1200,
+    title: "Consolidate overlapping LLM APIs",
+    description:
+      "GPT-4 Turbo, Azure OpenAI, and Claude 3.5 Sonnet serve overlapping use cases. Standardising on Claude Sonnet for long-context workloads and GPT-3.5 for high-volume triage can cut inference costs by ~25%.",
+    affectedTools: ["sw-gpt4-turbo", "sw-azure-openai", "sw-claude-sonnet"],
+    potentialSavingsUsd: 2200,
     priority: "high",
-    implementation: "Audit GPT-4 usage in Data Team, migrate compatible workloads to Claude. Potential cost reduction: 25-30%."
+    implementation:
+      "Audit call patterns in Data Team and Sales Team. Migrate overlapping GPT-4 workloads to Claude Sonnet; retire Azure OpenAI redundant endpoints. Estimated saving: $1,800–$2,400/month.",
   },
   {
     id: "rec-2",
     type: "redundancy",
-    title: "Optimize GPU cluster utilization",
-    description: "EU GPU cluster is underutilized at 38%. Consolidating EU workloads to US cluster would save 60% on regional costs.",
-    affectedTools: ["gpu-cluster-us", "gpu-cluster-eu"],
-    potentialSavingsUsd: 3100,
+    title: "Remove duplicate content-writing tools",
+    description:
+      "Jasper AI ($1,200/mo) and Grammarly Business ($900/mo) both serve the Sales team for content drafting, and Microsoft 365 Copilot already covers the same workflow for Operations.",
+    affectedTools: ["sw-jasper", "sw-grammarly", "sw-copilot365"],
+    potentialSavingsUsd: 1800,
     priority: "high",
-    implementation: "Migrate EU workloads to US cluster with regional caching. Consider reserved instances for baseline capacity."
+    implementation:
+      "Retire Jasper subscription (low 48% utilisation). Evaluate whether Grammarly adds enough value over M365 Copilot. Total saving if both retired: $2,100/month.",
   },
   {
     id: "rec-3",
     type: "pricing-strategy",
-    title: "Switch to annual commitment plans",
-    description: "Converting monthly subscriptions (LangChain, Pinecone, Datadog) to annual plans saves 20-25% per service.",
-    affectedTools: ["langchain", "pinecone", "logging-monitoring"],
-    potentialSavingsUsd: 500,
+    title: "Switch monthly SaaS to annual contracts",
+    description:
+      "Pinecone, Weaviate, Workato, and Glean are all on monthly billing. Annual commitments for these four tools typically unlock 20–30% discounts.",
+    affectedTools: ["sw-pinecone", "sw-weaviate", "sw-workato", "sw-glean"],
+    potentialSavingsUsd: 1500,
     priority: "medium",
-    implementation: "Negotiate annual contracts for high-utilization services. Estimated savings: $500-1000/month."
+    implementation:
+      "Negotiate annual contracts for tools with utilisation > 70%: Pinecone (84%), Glean (79%), Workato (72%). Expected saving: $1,200–$1,800/month.",
   },
 ];
 
@@ -96,18 +136,17 @@ export function calculateCostMetrics(costs: ToolCostBreakdown[]) {
   const lastMonthTotal = costs.reduce((sum, c) => sum + c.lastMonthCostUsd, 0);
   const monthOverMonthTrend = ((totalMonthly - lastMonthTotal) / lastMonthTotal) * 100;
 
-  const byCostCategory = {
-    Software: 0,
-    GPU: 0,
-    Training: 0,
+  const byCostCategory: Record<string, number> = {
+    Software:       0,
+    GPU:            0,
+    Training:       0,
     Infrastructure: 0,
   };
-
   costs.forEach((cost) => {
     byCostCategory[cost.costCategory] += cost.monthlyCostUsd;
   });
 
-  const potentialSavings = OPTIMIZATION_RECS.reduce((sum, rec) => sum + rec.potentialSavingsUsd, 0);
+  const potentialSavings = OPTIMIZATION_RECS.reduce((sum, r) => sum + r.potentialSavingsUsd, 0);
 
   return {
     totalMonthly,
@@ -119,40 +158,30 @@ export function calculateCostMetrics(costs: ToolCostBreakdown[]) {
   };
 }
 
-export function getCostsByBreakdown(costs: ToolCostBreakdown[], breakdownType: "category" | "tool" | "team") {
+export function getCostsByBreakdown(
+  costs: ToolCostBreakdown[],
+  breakdownType: "category" | "tool" | "team"
+) {
   if (breakdownType === "category") {
     const grouped: Record<string, { name: string; cost: number; color: string }> = {
-      Software: { name: "Software", cost: 0, color: "#8A9C8B" },
-      GPU: { name: "GPU Compute", cost: 0, color: "#d4836e" },
-      Training: { name: "Training", cost: 0, color: "#C4924A" },
-      Infrastructure: { name: "Infrastructure", cost: 0, color: "#9a9078" },
+      Software:       { name: "Software",       cost: 0, color: "#8A9C8B" },
+      GPU:            { name: "GPU Compute",     cost: 0, color: "#d4836e" },
+      Training:       { name: "Training",        cost: 0, color: "#C4924A" },
+      Infrastructure: { name: "Infrastructure",  cost: 0, color: "#9a9078" },
     };
-
-    costs.forEach((cost) => {
-      grouped[cost.costCategory].cost += cost.monthlyCostUsd;
-    });
-
+    costs.forEach((c) => { grouped[c.costCategory].cost += c.monthlyCostUsd; });
     return Object.values(grouped).sort((a, b) => b.cost - a.cost);
   }
 
   if (breakdownType === "tool") {
     return costs
-      .map((cost) => ({
-        name: cost.toolName,
-        cost: cost.monthlyCostUsd,
-        vendor: cost.vendor,
-        category: cost.costCategory,
-      }))
+      .map((c) => ({ name: c.toolName, cost: c.monthlyCostUsd, vendor: c.vendor, category: c.costCategory }))
       .sort((a, b) => b.cost - a.cost);
   }
 
   if (breakdownType === "team") {
     const grouped: Record<string, number> = {};
-
-    costs.forEach((cost) => {
-      grouped[cost.team] = (grouped[cost.team] ?? 0) + cost.monthlyCostUsd;
-    });
-
+    costs.forEach((c) => { grouped[c.team] = (grouped[c.team] ?? 0) + c.monthlyCostUsd; });
     return Object.entries(grouped)
       .map(([team, cost]) => ({ name: team, cost }))
       .sort((a, b) => b.cost - a.cost);
@@ -161,20 +190,20 @@ export function getCostsByBreakdown(costs: ToolCostBreakdown[], breakdownType: "
   return [];
 }
 
-// Mock 12-month trend data
+// 12-month trend aligned to current $48,100/month total (budget $55,000)
 export function getTrendData() {
   return [
-    { month: "Jan", cost: 15200, budget: 18000 },
-    { month: "Feb", cost: 15600, budget: 18000 },
-    { month: "Mar", cost: 15400, budget: 18000 },
-    { month: "Apr", cost: 15900, budget: 18000 },
-    { month: "May", cost: 16100, budget: 18000 },
-    { month: "Jun", cost: 16197, budget: 18000 },
-    { month: "Jul", cost: 16000, budget: 18000 },
-    { month: "Aug", cost: 15800, budget: 18000 },
-    { month: "Sep", cost: 16200, budget: 18000 },
-    { month: "Oct", cost: 16400, budget: 18000 },
-    { month: "Nov", cost: 15900, budget: 18000 },
-    { month: "Dec", cost: 17200, budget: 18000 },
+    { month: "Jul",  cost: 39200,  budget: 55000 },
+    { month: "Aug",  cost: 40100,  budget: 55000 },
+    { month: "Sep",  cost: 40900,  budget: 55000 },
+    { month: "Oct",  cost: 41800,  budget: 55000 },
+    { month: "Nov",  cost: 42600,  budget: 55000 },
+    { month: "Dec",  cost: 43200,  budget: 55000 },
+    { month: "Jan",  cost: 43900,  budget: 55000 },
+    { month: "Feb",  cost: 44700,  budget: 55000 },
+    { month: "Mar",  cost: 45400,  budget: 55000 },
+    { month: "Apr",  cost: 46200,  budget: 55000 },
+    { month: "May",  cost: 47100,  budget: 55000 },
+    { month: "Jun",  cost: 48100,  budget: 55000 },
   ];
 }

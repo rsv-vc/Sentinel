@@ -625,3 +625,43 @@ export const ALL_MOCK_VENDORS = [
   { id: "v-modal",       label: "Modal",            nodeType: "VENDOR", confidence: "MEDIUM", attributes: {} },
   { id: "v-ibm",         label: "IBM Cloud",        nodeType: "VENDOR", confidence: "MEDIUM", attributes: {} },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared use cases — source of truth for all Assess pages
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const MOCK_USE_CASES = [
+  { id: "uc-1", label: "Knowledge Management Assistant", nodeType: "USE_CASE", confidence: "MEDIUM",
+    attributes: { riskLevel: "MEDIUM", jurisdictions: ["US", "EU"], description: "Internal Q&A chatbot over company docs", vendorIds: ["v-anthropic", "v-microsoft", "v-openai"] } },
+  { id: "uc-2", label: "Document Creation Copilot", nodeType: "USE_CASE", confidence: "HIGH",
+    attributes: { riskLevel: "LOW", jurisdictions: ["US"], description: "AI-assisted drafting for proposals and reports", vendorIds: ["v-openai", "v-microsoft", "v-langchain"] } },
+  { id: "uc-3", label: "Customer Support Triage", nodeType: "USE_CASE", confidence: "HIGH",
+    attributes: { riskLevel: "HIGH", jurisdictions: ["US", "EU", "APAC"], description: "Automated ticket classification and routing", vendorIds: ["v-openai", "v-anthropic", "v-salesforce", "v-zendesk", "v-intercom"] } },
+  { id: "uc-4", label: "Code Review Assistant", nodeType: "USE_CASE", confidence: "HIGH",
+    attributes: { riskLevel: "LOW", jurisdictions: ["US"], description: "Automated PR review and improvement suggestions", vendorIds: ["v-anthropic", "v-microsoft"] } },
+  { id: "uc-5", label: "Financial Forecasting Model", nodeType: "USE_CASE", confidence: "HIGH",
+    attributes: { riskLevel: "HIGH", jurisdictions: ["US"], description: "ML pipeline for revenue and risk projections", vendorIds: ["v-aws", "v-google", "v-databricks", "v-snowflake"] } },
+  { id: "uc-6", label: "HR Policy Chatbot", nodeType: "USE_CASE", confidence: "MEDIUM",
+    attributes: { riskLevel: "MEDIUM", jurisdictions: ["US", "EU"], description: "Employee self-service for HR policy queries", vendorIds: ["v-anthropic", "v-openai", "v-workday"] } },
+  { id: "uc-7", label: "Workflow Automation", nodeType: "USE_CASE", confidence: "LOW",
+    attributes: { riskLevel: "UN_ASSESSED", jurisdictions: ["EU"], description: "Process orchestration across internal tools", vendorIds: ["v-anthropic", "v-microsoft", "v-langchain", "v-workato"] } },
+  { id: "uc-8", label: "Data Pipeline Intelligence", nodeType: "USE_CASE", confidence: "LOW",
+    attributes: { riskLevel: "UN_ASSESSED", jurisdictions: ["US"], description: "Anomaly detection in data ingestion pipelines", vendorIds: ["v-aws", "v-databricks", "v-snowflake", "v-pinecone"] } },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Jurisdictions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const MOCK_JURISDICTIONS = [
+  { id: "j-us", label: "United States", nodeType: "JURISDICTION", confidence: "HIGH",
+    attributes: { code: "US", frameworks: ["CCPA", "NIST AI RMF", "Executive Order 14110"], useCaseCount: 7 } },
+  { id: "j-eu", label: "European Union", nodeType: "JURISDICTION", confidence: "HIGH",
+    attributes: { code: "EU", frameworks: ["GDPR", "EU AI Act", "NIS2 Directive"], useCaseCount: 4 } },
+  { id: "j-uk", label: "United Kingdom", nodeType: "JURISDICTION", confidence: "HIGH",
+    attributes: { code: "UK", frameworks: ["UK GDPR", "ICO AI Guidance", "Data Protection Act 2018"], useCaseCount: 2 } },
+  { id: "j-apac", label: "APAC", nodeType: "JURISDICTION", confidence: "MEDIUM",
+    attributes: { code: "APAC", frameworks: ["PDPA (Singapore)", "Privacy Act 1988 (AU)", "PIPL (China)"], useCaseCount: 1 } },
+  { id: "j-ca", label: "Canada", nodeType: "JURISDICTION", confidence: "HIGH",
+    attributes: { code: "CA", frameworks: ["PIPEDA", "Bill C-27 (AIDA)", "Quebec Law 25"], useCaseCount: 1 } },
+];
