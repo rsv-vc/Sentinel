@@ -31,6 +31,7 @@ const mockAssets = [
     attributes: {
       vendor: "Anthropic", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 2500,
       useCaseLabels: ["Knowledge Management Assistant", "Code Review Assistant", "HR Policy Chatbot", "Workflow Automation"],
+      tags: { team: "product" },
     },
   },
   {
@@ -38,6 +39,7 @@ const mockAssets = [
     attributes: {
       vendor: "OpenAI", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 3200,
       useCaseLabels: ["Document Creation Copilot", "Customer Support Triage"],
+      tags: { team: "sales" },
     },
   },
   {
@@ -45,6 +47,7 @@ const mockAssets = [
     attributes: {
       vendor: "OpenAI", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 800,
       useCaseLabels: ["Customer Support Triage", "HR Policy Chatbot"],
+      tags: { team: "cx-ai" },
     },
   },
   {
@@ -52,6 +55,7 @@ const mockAssets = [
     attributes: {
       vendor: "AWS", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 1400,
       useCaseLabels: ["Financial Forecasting Model", "Data Pipeline Intelligence"],
+      tags: { team: "finance" },
     },
   },
   {
@@ -59,6 +63,7 @@ const mockAssets = [
     attributes: {
       vendor: "Google Cloud", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 1200,
       useCaseLabels: ["Financial Forecasting Model"],
+      tags: { team: "finance" },
     },
   },
   {
@@ -66,6 +71,7 @@ const mockAssets = [
     attributes: {
       vendor: "Pinecone", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 500,
       useCaseLabels: ["Knowledge Management Assistant", "Data Pipeline Intelligence"],
+      tags: { team: "ops" },
     },
   },
   {
@@ -73,6 +79,7 @@ const mockAssets = [
     attributes: {
       vendor: "LangChain", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 200,
       useCaseLabels: ["Workflow Automation", "Document Creation Copilot"],
+      tags: { team: "product" },
     },
   },
   {
@@ -80,6 +87,7 @@ const mockAssets = [
     attributes: {
       vendor: "Hugging Face", kind: "MODEL_DEPLOYMENT", monthlyCostUsd: 400,
       useCaseLabels: ["Data Pipeline Intelligence", "Workflow Automation"],
+      tags: { team: "ops" },
     },
   },
 ];
