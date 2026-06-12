@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
-import { Card, CardTitle } from "@/components/Card";
+import { Card } from "@/components/Card";
 
 export const metadata: Metadata = { title: "Recent Changes" };
 

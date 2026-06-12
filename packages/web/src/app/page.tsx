@@ -6,7 +6,6 @@ import { EstateHealthGauge } from "@/components/EstateHealthGauge";
 import { RiskDistributionBar } from "@/components/RiskDistributionBar";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { ConcentrationBanner } from "@/components/ConcentrationBanner";
-import { TopIssuesPanel } from "@/components/TopIssuesPanel";
 import { SpendBreakdownChart, DonutChart } from "@/components/SpendBreakdownChart";
 
 export const metadata: Metadata = { title: "Dashboard" };

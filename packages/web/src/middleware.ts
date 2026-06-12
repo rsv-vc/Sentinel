@@ -6,16 +6,9 @@
  * Redirects to /login if missing or invalid.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/favicon.ico", "/_next", "/api"];
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "sentinel-dev-secret-change-in-production",
-);
-
-export async function middleware(req: NextRequest) {
+export function middleware() {
   // Demo mode — no auth required
   return NextResponse.next();
 }
