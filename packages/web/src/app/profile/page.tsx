@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-import { redirect } from "next/navigation";
 import { Card, CardTitle } from "@/components/Card";
 import { PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = { title: "Profile" };
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "sentinel-dev-secret-change-in-production",
-);
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN:   "text-[#d4836e] bg-[#C86F5812] border-[#C86F5828]",
@@ -23,17 +16,11 @@ const ROLE_DESC: Record<string, string> = {
   VIEWER:  "Read-only — can explore the graph and view reports.",
 };
 
-export default async function ProfilePage() {
-  const store = await cookies();
-  const token = store.get("sentinel_token")?.value;
-  if (!token) redirect("/login");
-
-  const { payload } = await jwtVerify(token, JWT_SECRET);
-  const email = payload.email as string;
-  const role  = payload.role  as string;
-  const name  = payload.name  as string | undefined;
-
-  const initial = (name ?? email)[0].toUpperCase();
+export default function ProfilePage() {
+  const email = "demo@thevcventure.com";
+  const role  = "ADMIN";
+  const name  = "Demo User";
+  const initial = name[0].toUpperCase();
 
   return (
     <div className="space-y-6 max-w-xl">
@@ -46,9 +33,9 @@ export default async function ProfilePage() {
             <span className="text-xl font-black text-[#9baf9c] uppercase leading-none">{initial}</span>
           </div>
           <div>
-            {name && <p className="text-[16px] font-semibold text-[#D9C8B4]">{name}</p>}
+            <p className="text-[16px] font-semibold text-[#D9C8B4]">{name}</p>
             <p className="text-[13px] text-[#9a9078] mt-0.5">{email}</p>
-            <span className={`inline-block mt-1.5 text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider leading-none ${ROLE_STYLES[role] ?? ROLE_STYLES.VIEWER}`}>
+            <span className={`inline-block mt-1.5 text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider leading-none ${ROLE_STYLES[role]}`}>
               {role}
             </span>
           </div>
@@ -84,19 +71,19 @@ export default async function ProfilePage() {
         <dl className="grid grid-cols-2 gap-x-8 gap-y-3 mt-3">
           <div>
             <dt className="text-[10px] text-[#5c5248] uppercase tracking-wide">Auth method</dt>
-            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">JWT cookie</dd>
+            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">Demo mode</dd>
           </div>
           <div>
             <dt className="text-[10px] text-[#5c5248] uppercase tracking-wide">Session duration</dt>
-            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">8 hours</dd>
+            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">Persistent</dd>
           </div>
           <div>
             <dt className="text-[10px] text-[#5c5248] uppercase tracking-wide">Instance</dt>
-            <dd className="text-[13px] text-[#D9C8B4] mt-0.5 font-mono">sentinel.local</dd>
+            <dd className="text-[13px] text-[#D9C8B4] mt-0.5 font-mono">sentinel.vercel.app</dd>
           </div>
           <div>
             <dt className="text-[10px] text-[#5c5248] uppercase tracking-wide">Environment</dt>
-            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">Local prototype</dd>
+            <dd className="text-[13px] text-[#D9C8B4] mt-0.5">Demo</dd>
           </div>
         </dl>
       </Card>

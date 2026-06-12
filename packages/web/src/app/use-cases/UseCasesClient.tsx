@@ -58,22 +58,6 @@ function CategoryChip({ label }: { label: string }) {
   );
 }
 
-function FilterPill({
-  active, onClick, children,
-}: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors whitespace-nowrap ${
-        active
-          ? "bg-[#8A9C8B] text-[#1a1918]"
-          : "text-[#9a9078] border border-[#2a2825] hover:text-[#D9C8B4] hover:border-[#8A9C8B44]"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Use Case card
@@ -290,60 +274,77 @@ export function UseCasesClient({ useCases, vendors, assets }: Props) {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="space-y-2.5">
-        {/* Row 1: search + team filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Search */}
-          <div className="relative">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5c5248]" aria-hidden>
-              <circle cx="5" cy="5" r="3.5" stroke="currentColor" strokeWidth="1.3"/>
-              <line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search use cases or vendors…"
-              className="pl-8 pr-3 py-1.5 bg-[#161514] border border-[#2a2825] rounded-lg text-[12px] text-[#D9C8B4] placeholder-[#3a3430] focus:outline-none focus:border-[#8A9C8B] transition-colors w-52"
-            />
-          </div>
-
-          <span className="text-[10px] text-[#3a3430] uppercase tracking-wider font-semibold px-1">Team</span>
-
-          <FilterPill active={activeTeam === "all"} onClick={() => setActiveTeam("all")}>All</FilterPill>
-          {allTeams.map((t) => (
-            <FilterPill key={t} active={activeTeam === t} onClick={() => setActiveTeam(t)}>
-              {TEAM_LABEL[t] ?? t}
-            </FilterPill>
-          ))}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Search */}
+        <div className="relative">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5c5248]" aria-hidden>
+            <circle cx="5" cy="5" r="3.5" stroke="currentColor" strokeWidth="1.3"/>
+            <line x1="7.5" y1="7.5" x2="11" y2="11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search use cases…"
+            className="pl-8 pr-3 py-1.5 bg-[#161514] border border-[#2a2825] rounded-lg text-[12px] text-[#D9C8B4] placeholder-[#3a3430] focus:outline-none focus:border-[#8A9C8B] transition-colors w-48"
+          />
         </div>
 
-        {/* Row 2: vendor filter — software vendors only, scrollable */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#3a3430] uppercase tracking-wider font-semibold whitespace-nowrap">Vendor</span>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-            <FilterPill active={activeVendor === "all"} onClick={() => setActiveVendor("all")}>All</FilterPill>
-            {softwareVendors.map((v) => (
-              <FilterPill key={v} active={activeVendor === v} onClick={() => setActiveVendor(v)}>
-                {v}
-              </FilterPill>
+        {/* Team dropdown */}
+        <div className="relative">
+          <select
+            value={activeTeam}
+            onChange={(e) => setActiveTeam(e.target.value)}
+            className="appearance-none pl-3 pr-7 py-1.5 bg-[#161514] border border-[#2a2825] rounded-lg text-[12px] text-[#9a9078] focus:outline-none focus:border-[#8A9C8B] transition-colors cursor-pointer hover:border-[#3a3835]"
+          >
+            <option value="all">All teams</option>
+            {allTeams.map((t) => (
+              <option key={t} value={t}>{TEAM_LABEL[t] ?? t}</option>
             ))}
-          </div>
+          </select>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#3a3430]">
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
+
+        {/* Vendor dropdown */}
+        <div className="relative">
+          <select
+            value={activeVendor}
+            onChange={(e) => setActiveVendor(e.target.value)}
+            className="appearance-none pl-3 pr-7 py-1.5 bg-[#161514] border border-[#2a2825] rounded-lg text-[12px] text-[#9a9078] focus:outline-none focus:border-[#8A9C8B] transition-colors cursor-pointer hover:border-[#3a3835]"
+          >
+            <option value="all">All vendors</option>
+            {softwareVendors.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#3a3430]">
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
+        {/* Clear button — only when filters active */}
+        {(search || activeTeam !== "all" || activeVendor !== "all") && (
+          <button
+            onClick={() => { setSearch(""); setActiveTeam("all"); setActiveVendor("all"); }}
+            className="text-[11.5px] text-[#5c5248] hover:text-[#9a9078] transition-colors px-2 py-1.5 rounded-lg hover:bg-[#2a2825]"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* ── Results count ── */}
       {(search || activeTeam !== "all" || activeVendor !== "all") && (
         <p className="text-[11.5px] text-[#5c5248]">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-          {activeVendor !== "all" && <span> for <span className="text-[#9a9078]">{activeVendor}</span></span>}
-          {activeTeam !== "all" && <span> in <span className="text-[#9a9078]">{TEAM_LABEL[activeTeam] ?? activeTeam}</span></span>}
-          {search && <span> matching <span className="text-[#9a9078]">"{search}"</span></span>}
-          <button onClick={() => { setSearch(""); setActiveTeam("all"); setActiveVendor("all"); }}
-            className="ml-2 text-[#5c5248] hover:text-[#9a9078] underline transition-colors">
-            Clear
-          </button>
+          {activeVendor !== "all" && <span> · <span className="text-[#9a9078]">{activeVendor}</span></span>}
+          {activeTeam !== "all" && <span> · <span className="text-[#9a9078]">{TEAM_LABEL[activeTeam] ?? activeTeam}</span></span>}
+          {search && <span> · matching <span className="text-[#9a9078]">"{search}"</span></span>}
         </p>
       )}
 
