@@ -1,14 +1,62 @@
 import type { Metadata } from "next";
-import { serverGetBoardReport as getBoardReport } from "@/lib/serverApi";
 import { PageHeader } from "@/components/PageHeader";
-import type { BoardReportDTO, RiskLevelKey } from "@/lib/api";
+import type { RiskLevelKey } from "@/lib/api";
 import { Card, CardTitle } from "@/components/Card";
 
 export const metadata: Metadata = { title: "Board Report" };
 
-// ---------------------------------------------------------------------------
-// Colour helpers
-// ---------------------------------------------------------------------------
+// Mock board report data
+const mockReport = {
+  meta: {
+    generatedAt: new Date().toISOString(),
+    dataAsOf: new Date().toISOString(),
+    totalSyncRuns: 147,
+    sentinelVersion: "2.4.1",
+  },
+  coverage: {
+    score: 62,
+    totalNodes: 94,
+    telemetryNodes: 94,
+    manualNodes: 0,
+    unconfirmedLowConfidence: 4,
+    disclaimer: "Coverage score reflects nodes confirmed via telemetry or manual review. Unconfirmed low-confidence nodes are excluded from risk scoring until reviewed.",
+    blindSpots: [
+      { nodeId: "bs-1", kind: "HARDWARE",    label: "GPU Cluster Config",        description: "No telemetry — inferred from billing data only" },
+      { nodeId: "bs-2", kind: "MODEL",       label: "Anthropic Model Versions",  description: "Version pinning not detected in API calls" },
+      { nodeId: "bs-3", kind: "PIPELINE",    label: "Data Pipeline Logs",        description: "ETL ingestion paths not mapped" },
+      { nodeId: "bs-4", kind: "INTEGRATION", label: "Slack AI Integration",      description: "OAuth scope broader than required" },
+    ],
+  },
+  risk: {
+    totalUseCases: 12,
+    highOrCritical: 2,
+    unassessed: 4,
+    concentrationFlags: [
+      { vendorLabel: "Anthropic", portfolioShare: 42, useCaseCount: 5 },
+      { vendorLabel: "OpenAI",    portfolioShare: 33, useCaseCount: 4 },
+    ],
+    useCaseSummaries: [
+      { id: "uc-1", label: "Knowledge Management Assistant", residualLevel: "MEDIUM"      as RiskLevelKey, jurisdictions: ["US", "EU"], topSignals: ["No vendor failover defined"],        complianceGapCount: 1 },
+      { id: "uc-2", label: "Document Creation Copilot",      residualLevel: "LOW"         as RiskLevelKey, jurisdictions: ["US"],       topSignals: ["Monitoring in place"],               complianceGapCount: 0 },
+      { id: "uc-3", label: "Customer Support Triage",        residualLevel: "HIGH"        as RiskLevelKey, jurisdictions: ["US","EU","APAC"], topSignals: ["Cross-border data egress"],   complianceGapCount: 3 },
+      { id: "uc-4", label: "Code Review Assistant",          residualLevel: "LOW"         as RiskLevelKey, jurisdictions: ["US"],       topSignals: ["Low risk profile"],                  complianceGapCount: 0 },
+      { id: "uc-5", label: "Financial Forecasting Model",    residualLevel: "HIGH"        as RiskLevelKey, jurisdictions: ["US"],       topSignals: ["No FRIA completed"],                 complianceGapCount: 2 },
+      { id: "uc-6", label: "HR Policy Chatbot",              residualLevel: "MEDIUM"      as RiskLevelKey, jurisdictions: ["US","EU"],  topSignals: ["Personal data in scope"],            complianceGapCount: 1 },
+      { id: "uc-7", label: "Workflow Automation",            residualLevel: "UN_ASSESSED" as RiskLevelKey, jurisdictions: ["EU"],       topSignals: ["Pending assessment"],                complianceGapCount: 0 },
+      { id: "uc-8", label: "Data Pipeline Intelligence",     residualLevel: "UN_ASSESSED" as RiskLevelKey, jurisdictions: ["US"],       topSignals: ["Pending assessment"],                complianceGapCount: 0 },
+    ],
+  },
+  compliance: {
+    totalObligationsTriggered: 18,
+    totalGaps: 7,
+    disclaimer: "This compliance assessment is automated and based solely on graph evidence. It does not constitute legal advice. Obligations are derived from GDPR v1.1.0, EU AI Act v1.0.0, and DPDP v1.0.0. Consult qualified legal counsel before relying on this report.",
+    topGaps: [
+      { obligationId: "gdpr-22", obligationTitle: "Automated Decision-Making Rights", reference: "GDPR Art. 22", ruleSetName: "GDPR", ruleSetVersion: "1.1.0", effectiveDate: "2024-01-01", affectedUseCaseCount: 3, affectedUseCaseLabels: ["Customer Support Triage", "Financial Forecasting Model", "HR Policy Chatbot"] },
+      { obligationId: "eu-ai-9", obligationTitle: "Fundamental Rights Impact Assessment", reference: "EU AI Act Art. 9", ruleSetName: "EU AI Act", ruleSetVersion: "1.0.0", effectiveDate: "2025-08-01", affectedUseCaseCount: 2, affectedUseCaseLabels: ["Customer Support Triage", "Financial Forecasting Model"] },
+      { obligationId: "gdpr-46", obligationTitle: "Cross-Border Transfer Safeguards", reference: "GDPR Art. 46", ruleSetName: "GDPR", ruleSetVersion: "1.1.0", effectiveDate: "2024-01-01", affectedUseCaseCount: 2, affectedUseCaseLabels: ["Customer Support Triage", "Knowledge Management Assistant"] },
+    ],
+  },
+};
 
 const RISK_COLOR: Record<RiskLevelKey, string> = {
   LOW:         "text-[#9baf9c]",
@@ -40,10 +88,6 @@ function scoreColor(score: number) {
   return "text-[#d4836e]";
 }
 
-// ---------------------------------------------------------------------------
-// Download buttons (client-only via anchor hrefs)
-// ---------------------------------------------------------------------------
-
 function DownloadButton({ href, label, icon }: { href: string; label: string; icon: string }) {
   return (
     <a
@@ -57,20 +101,8 @@ function DownloadButton({ href, label, icon }: { href: string; label: string; ic
   );
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
-export default async function ReportsPage() {
-  let report: BoardReportDTO | null = null;
-  let error: string | null = null;
-
-  try {
-    report = await getBoardReport();
-  } catch (e) {
-    error = String(e);
-  }
-
+export default function ReportsPage() {
+  const report = mockReport;
   const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
   return (
@@ -87,17 +119,7 @@ export default async function ReportsPage() {
         }
       />
 
-      {error && (
-        <Card>
-          <p className="text-sm text-[#d4836e]">
-            Failed to load report — ensure the API is running and the graph is populated.<br />
-            <span className="text-[#5c5248] text-xs">{error}</span>
-          </p>
-        </Card>
-      )}
-
-      {report && (
-        <>
+      <>
           {/* Meta row */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Card>
@@ -295,13 +317,88 @@ export default async function ReportsPage() {
             )}
           </Card>
 
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 4 — Financial Overview                                   */}
+          {/* ---------------------------------------------------------------- */}
+          <Card>
+            <CardTitle>4 · Financial Overview & Cost Optimization</CardTitle>
+
+            {/* Finance KPI Row */}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-4">
+              <div className="p-3 rounded-lg border border-[#2a2825] bg-[#1e1c1a]">
+                <p className="text-xs text-[#5c5248] mb-1">Monthly Spend</p>
+                <p className="text-2xl font-black text-[#D9C8B4]">$16,197</p>
+                <p className="text-xs text-[#5c5248] mt-1">+1.2% MoM</p>
+              </div>
+              <div className="p-3 rounded-lg border border-[#2a2825] bg-[#1e1c1a]">
+                <p className="text-xs text-[#5c5248] mb-1">Annual Run-Rate</p>
+                <p className="text-2xl font-black text-[#D9C8B4]">$194,364</p>
+                <p className="text-xs text-[#9baf9c] mt-1">12 Active Tools</p>
+              </div>
+              <div className="p-3 rounded-lg border border-[#9baf9c30] bg-[#1e2420]">
+                <p className="text-xs text-[#5c5248] mb-1">Savings Potential</p>
+                <p className="text-2xl font-black text-[#9baf9c]">$4,800/yr</p>
+                <p className="text-xs text-[#5c5248] mt-1">8% reduction</p>
+              </div>
+              <div className="p-3 rounded-lg border border-[#2a2825] bg-[#1e1c1a]">
+                <p className="text-xs text-[#5c5248] mb-1">Active Vendors</p>
+                <p className="text-2xl font-black text-[#D9C8B4]">5</p>
+                <p className="text-xs text-[#d4a456] mt-1">42% concentration</p>
+              </div>
+            </div>
+
+            {/* Spend by Category */}
+            <p className="text-sm font-semibold text-[#D9C8B4] mb-3">Monthly Spend by Category</p>
+            <div className="space-y-2 mb-4">
+              {[
+                { label: "Software/LLMs", amount: 7900, pct: 49, color: "bg-[#8A9C8B]" },
+                { label: "GPU Compute", amount: 13700, pct: 84, color: "bg-[#d4836e]" },
+                { label: "Training", amount: 2000, pct: 12, color: "bg-[#C4924A]" },
+                { label: "Infrastructure", amount: 2600, pct: 16, color: "bg-[#9a9078]" },
+              ].map((cat) => (
+                <div key={cat.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-[#D9C8B4] font-medium">{cat.label}</span>
+                    <span className="text-xs font-bold text-[#9a9078]">${cat.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-[#242220] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${cat.color}`} style={{ width: `${cat.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Optimization Opportunities */}
+            <p className="text-sm font-semibold text-[#d4a456] mb-3">Top Cost Optimization Opportunities</p>
+            <div className="space-y-2">
+              {[
+                { title: "Consolidate LLM Providers", saving: "$1,200/yr", priority: "HIGH" },
+                { title: "Optimize GPU Utilization (EU→US)", saving: "$3,100/yr", priority: "HIGH" },
+                { title: "Switch to Annual Commitments", saving: "$500/yr", priority: "MEDIUM" },
+              ].map((opp) => (
+                <div key={opp.title} className="flex items-start justify-between p-3 rounded-lg border border-[#2a2825] gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#D9C8B4]">{opp.title}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#9baf9c18] text-[#9baf9c] border border-[#9baf9c30]">
+                      {opp.saving}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${opp.priority === "HIGH" ? "bg-[#d4836e18] text-[#d4836e] border-[#d4836e30]" : "bg-[#d4a45618] text-[#d4a456] border-[#d4a45630]"}`}>
+                      {opp.priority}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
           {/* Footer note */}
           <p className="text-xs text-[#5c5248] text-center pb-4">
             Sentinel v{report.meta.sentinelVersion} · Local prototype · Not a legal determination ·
-            Download the PDF or CSV above for board distribution
+            Download the PDF or CSV above for board distribution · Updated: {new Date().toLocaleDateString()}
           </p>
         </>
-      )}
     </div>
   );
 }

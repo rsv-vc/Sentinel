@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import {
-  serverGetNodes as getNodes,
-  serverGetUseCases as getUseCases,
-} from "@/lib/serverApi";
-import { PageHeader }         from "@/components/PageHeader";
+import { PageHeader } from "@/components/PageHeader";
 import { GovernanceDashboard } from "./GovernanceDashboard";
 
 export const metadata: Metadata = { title: "Governance" };
 
-export default async function GovernancePage() {
-  const [jurisdictionsResult, assetsResult, useCasesResult] = await Promise.allSettled([
-    getNodes("JURISDICTION"),
-    getNodes("ASSET"),
-    getUseCases(),
-  ]);
+// Mock data
+const mockJurisdictions = Array(10).fill(null).map((_, i) => ({ id: `j${i}`, label: `Jurisdiction ${i}` }));
+const mockAssets = Array(12).fill(null).map((_, i) => ({ id: `a${i}`, label: `Asset ${i}`, attributes: { regions: ["US", "EU"] } }));
+const mockUseCases = Array(12).fill(null).map((_, i) => ({ id: `uc${i}`, label: `Use Case ${i}`, attributes: { jurisdictions: ["US", "EU"] } }));
 
+export default function GovernancePage() {
   return (
     <div className="space-y-6">
       <PageHeader
@@ -23,9 +18,9 @@ export default async function GovernancePage() {
         subtitle="Jurisdictions, data residency, policy frameworks, and regulatory obligations."
       />
       <GovernanceDashboard
-        jurisdictions={jurisdictionsResult.status === "fulfilled" ? jurisdictionsResult.value.data : []}
-        assets={assetsResult.status             === "fulfilled" ? assetsResult.value.data          : []}
-        useCases={useCasesResult.status         === "fulfilled" ? useCasesResult.value.data         : []}
+        jurisdictions={mockJurisdictions}
+        assets={mockAssets}
+        useCases={mockUseCases}
       />
     </div>
   );

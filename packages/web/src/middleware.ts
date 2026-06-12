@@ -16,28 +16,8 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  const token = req.cookies.get("sentinel_token")?.value;
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  try {
-    await jwtVerify(token, JWT_SECRET);
-    return NextResponse.next();
-  } catch {
-    // Token invalid or expired — redirect to login
-    const res = NextResponse.redirect(new URL("/login", req.url));
-    res.cookies.delete("sentinel_token");
-    return res;
-  }
+  // Demo mode — no auth required
+  return NextResponse.next();
 }
 
 export const config = {

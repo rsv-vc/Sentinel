@@ -14,12 +14,15 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Initialize from localStorage during render
-    if (typeof window === "undefined") return "dark";
+  const [theme, setTheme] = useState<Theme>("dark");
+
+  useEffect(() => {
     const saved = localStorage.getItem("sentinel-theme") as Theme | null;
-    return saved ?? "dark";
-  });
+    if (saved) {
+      setTheme(saved);
+      applyTheme(saved);
+    }
+  }, []);
 
   function applyTheme(t: Theme) {
     const html = document.documentElement;

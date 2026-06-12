@@ -206,6 +206,15 @@ function IconDatabase() {
   );
 }
 
+function IconTrendingDown() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M2 5L6 1l4 4L12 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 2h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UserMenu popup
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,7 +264,8 @@ const SHORTCUTS = [
     { keys: ["G", "X"],  label: "Go to Risk"         },
     { keys: ["G", "L"],  label: "Go to Compliance"   },
     { keys: ["G", "G"],  label: "Go to Governance"   },
-    { keys: ["G", "C"],  label: "Go to Coverage"     },
+    { keys: ["G", "C"],  label: "Go to Finance"      },
+    { keys: ["G", "E"],  label: "Go to Coverage"     },
     { keys: ["G", "R"],  label: "Go to Reports"      },
   ]},
   { group: "Sidebar",     items: [
@@ -554,10 +564,11 @@ const NAV_GROUPS = [
   {
     label: "Assess",
     items: [
-      { href: "/risk",       label: "Risk",       Icon: IconFlame   },
-      { href: "/compliance", label: "Compliance", Icon: IconGlobe   },
-      { href: "/governance", label: "Governance", Icon: IconPillars },
-      { href: "/coverage",   label: "Coverage",   Icon: IconShield  },
+      { href: "/risk",       label: "Risk",       Icon: IconFlame        },
+      { href: "/compliance", label: "Compliance", Icon: IconGlobe        },
+      { href: "/governance", label: "Governance", Icon: IconPillars      },
+      { href: "/finance",    label: "Finance",    Icon: IconTrendingDown },
+      { href: "/coverage",   label: "Coverage",   Icon: IconShield       },
     ],
   },
   {
@@ -601,7 +612,7 @@ export function AppShell({
 
     const GOTO: Record<string, string> = {
       d: "/", a: "/assets", v: "/vendors", s: "/datasets", u: "/use-cases",
-      x: "/risk", l: "/compliance", g: "/governance", c: "/coverage", r: "/reports",
+      x: "/risk", l: "/compliance", g: "/governance", c: "/finance", e: "/coverage", r: "/reports",
     };
 
     function isTyping(e: KeyboardEvent) {

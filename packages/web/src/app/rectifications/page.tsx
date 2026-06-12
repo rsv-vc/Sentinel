@@ -1,39 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { serverListRectifications as listRectifications } from "@/lib/serverApi";
 import { PageHeader } from "@/components/PageHeader";
-import type { RectificationDTO } from "@/lib/api";
 import { Card, CardTitle } from "@/components/Card";
 import { RectificationPanel } from "@/components/RectificationPanel";
 
 export const metadata: Metadata = { title: "Rectifications" };
 
+const mockRectifications = [
+  { id: "r-1", title: "Review Anthropic vendor contract for EU data residency", status: "OPEN", priority: "HIGH", useCaseId: "uc-3", useCaseLabel: "Customer Support Triage", createdAt: "2026-06-01T10:00:00Z", updatedAt: "2026-06-01T10:00:00Z", description: "Ensure DPA covers EU customer data processed via Claude API.", evidence: [] },
+  { id: "r-2", title: "Implement model evaluation framework", status: "IN_PROGRESS", priority: "HIGH", useCaseId: "uc-5", useCaseLabel: "Financial Forecasting Model", createdAt: "2026-05-20T09:00:00Z", updatedAt: "2026-06-05T14:00:00Z", description: "Establish red-teaming and evaluation pipeline before production.", evidence: [] },
+  { id: "r-3", title: "Restrict GPT-4 data egress to US-only endpoints", status: "OPEN", priority: "MEDIUM", useCaseId: "uc-6", useCaseLabel: "HR Policy Chatbot", createdAt: "2026-06-03T08:00:00Z", updatedAt: "2026-06-03T08:00:00Z", description: "HR data must not leave US jurisdiction per policy.", evidence: [] },
+];
 
-export default async function RectificationsPage() {
-  let items: RectificationDTO[] = [];
-  let fetchError: string | null = null;
-
-  try {
-    const result = await listRectifications();
-    items = result.data;
-  } catch (e) {
-    fetchError = String(e);
-  }
-
-  const open        = items.filter((r) => r.status === "OPEN");
-  const inProgress  = items.filter((r) => r.status === "IN_PROGRESS");
-  const resolved    = items.filter((r) => r.status === "RESOLVED");
-  const wontFix     = items.filter((r) => r.status === "WONT_FIX");
+export default function RectificationsPage() {
+  const items = mockRectifications;
+  const open       = items.filter((r) => r.status === "OPEN");
+  const inProgress = items.filter((r) => r.status === "IN_PROGRESS");
+  const resolved   = items.filter((r) => r.status === "RESOLVED");
+  const wontFix    = items.filter((r) => r.status === "WONT_FIX");
 
   return (
     <div className="space-y-6">
-
       <PageHeader
         title="Rectifications"
         subtitle="Remediation actions against risk signals and compliance gaps — rectify, not transfer"
       />
 
-      {/* KPI row */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Open",        count: open.length,       color: "text-[#d4a456]" },
@@ -48,34 +40,10 @@ export default async function RectificationsPage() {
         ))}
       </div>
 
-      {fetchError && (
-        <Card>
-          <p className="text-sm text-[#d4836e]">
-            Failed to load rectifications — ensure the API is running.<br />
-            <span className="text-xs text-[#5c5248]">{fetchError}</span>
-          </p>
-        </Card>
-      )}
-
-      {/* New rectification + list */}
       <Card>
         <CardTitle>All Rectifications</CardTitle>
-        <RectificationPanel
-          rectifications={items.map((r) => ({ ...r, evidence: [] }))}
-          title=""
-        />
+        <RectificationPanel rectifications={items as any} title="" />
       </Card>
-
-      {items.length === 0 && !fetchError && (
-        <Card>
-          <p className="text-sm text-[#5c5248] text-center py-6">
-            No rectification actions yet. Open one from a use-case detail page or use the form above.
-          </p>
-          <p className="text-xs text-[#5c5248] text-center">
-            <Link href="/use-cases" className="text-[#8A9C8B] hover:underline">Go to Use Cases →</Link>
-          </p>
-        </Card>
-      )}
     </div>
   );
 }
