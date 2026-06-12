@@ -19,7 +19,7 @@ export default function CompliancePage() {
         subtitle="AI regulatory obligations by jurisdiction, policy frameworks, and use-case gap analysis."
       />
       <ComplianceDashboard
-        useCases={mockUseCases}
+        useCases={mockUseCases as any}
         jurisdictions={[]}
       />
     </div>

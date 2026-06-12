@@ -18,9 +18,9 @@ export default function GovernancePage() {
         subtitle="Jurisdictions, data residency, policy frameworks, and regulatory obligations."
       />
       <GovernanceDashboard
-        jurisdictions={mockJurisdictions}
-        assets={mockAssets}
-        useCases={mockUseCases}
+        jurisdictions={mockJurisdictions as any}
+        assets={mockAssets as any}
+        useCases={mockUseCases as any}
       />
     </div>
   );

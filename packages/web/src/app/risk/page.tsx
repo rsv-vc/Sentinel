@@ -39,8 +39,8 @@ export default function RiskPage() {
         subtitle="AI portfolio risk levels, concentration flags, and open actions."
       />
       <RiskDashboard
-        portfolio={mockPortfolio}
-        useCases={mockUseCases}
+        portfolio={mockPortfolio as any}
+        useCases={mockUseCases as any}
         openRects={3}
       />
     </div>
